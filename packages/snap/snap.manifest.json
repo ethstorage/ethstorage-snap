@@ -1,13 +1,13 @@
 {
   "version": "0.1.0",
   "description": "An example Snap written in TypeScript.",
-  "proposedName": "TypeScript Example Snap",
+  "proposedName": "EthStorage Snap",
   "repository": {
     "type": "git",
     "url": "https://github.com/MetaMask/template-snap-monorepo.git"
   },
   "source": {
-    "shasum": "xlzdQ1CbKhcYS4jVpmC2G8RQSS92nEiTo4Uobj2Semw=",
+    "shasum": "eCtuTdoGS3/k2Yu5pxwOiVR5co1ATwcd79utFDJJ8Ls=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
@@ -22,7 +22,8 @@
     "endowment:rpc": {
       "dapps": true,
       "snaps": false
-    }
+    },
+    "endowment:network-access": {}
   },
   "manifestVersion": "0.1"
 }
