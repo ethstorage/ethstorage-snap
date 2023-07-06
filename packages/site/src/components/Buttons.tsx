@@ -124,3 +124,11 @@ export const HeaderButtons = ({
     </ConnectedContainer>
   );
 };
+
+export const EnableModuleButton = (props: ComponentProps<typeof Button>) => {
+  return <Button {...props}>Enable Session Module</Button>;
+};
+
+export const InteractSessionButton = (props: ComponentProps<typeof Button>) => {
+  return <Button {...props}>Send Session Transaction</Button>;
+};

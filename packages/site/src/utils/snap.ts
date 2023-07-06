@@ -53,7 +53,6 @@ export const getSnap = async (version?: string): Promise<Snap | undefined> => {
 /**
  * Invoke the "hello" method from the example snap.
  */
-
 export const sendHello = async () => {
   await window.ethereum.request({
     method: 'wallet_invokeSnap',
@@ -62,3 +61,23 @@ export const sendHello = async () => {
 };
 
 export const isLocalSnap = (snapId: string) => snapId.startsWith('local:');
+
+// smart account info
+export const getSessionInfo = async () => {
+  console.log('invoking snap to get session info');
+  return await window.ethereum.request({
+    method: 'wallet_invokeSnap',
+    params: {
+      snapId: defaultSnapOrigin,
+      request: { method: 'get_session_info' },
+    },
+  });
+};
+
+export const useSmartAccount = async () => {
+  console.log('invoke Snap...');
+  return await window.ethereum.request({
+    method: 'wallet_invokeSnap',
+    params: { snapId: defaultSnapOrigin, request: { method: 'connect' } },
+  });
+};

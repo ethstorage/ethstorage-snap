@@ -1,16 +1,22 @@
-import { useContext } from 'react';
+import { useContext, useEffect } from 'react';
 import styled from 'styled-components';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
+import {
+  SmartAccountActions,
+  SmartAccountContext,
+} from '../hooks/SmartAccountContext';
 import {
   connectSnap,
   getSnap,
   sendHello,
-  shouldDisplayReconnectButton,
+  getSessionInfo,
+  useSmartAccount,
 } from '../utils';
 import {
   ConnectButton,
   InstallFlaskButton,
-  ReconnectButton,
+  EnableModuleButton,
+  InteractSessionButton,
   SendHelloButton,
   Card,
 } from '../components';
@@ -41,44 +47,15 @@ const Span = styled.span`
   color: ${(props) => props.theme.colors.primary.default};
 `;
 
-const Subtitle = styled.p`
-  font-size: ${({ theme }) => theme.fontSizes.large};
-  font-weight: 500;
-  margin-top: 0;
-  margin-bottom: 0;
-  ${({ theme }) => theme.mediaQueries.small} {
-    font-size: ${({ theme }) => theme.fontSizes.text};
-  }
-`;
-
 const CardContainer = styled.div`
   display: flex;
   flex-direction: row;
   flex-wrap: wrap;
   justify-content: space-between;
-  max-width: 64.8rem;
+  max-width: 90rem;
   width: 100%;
   height: 100%;
   margin-top: 1.5rem;
-`;
-
-const Notice = styled.div`
-  background-color: ${({ theme }) => theme.colors.background.alternative};
-  border: 1px solid ${({ theme }) => theme.colors.border.default};
-  color: ${({ theme }) => theme.colors.text.alternative};
-  border-radius: ${({ theme }) => theme.radii.default};
-  padding: 2.4rem;
-  margin-top: 2.4rem;
-  max-width: 60rem;
-  width: 100%;
-
-  & > * {
-    margin: 0;
-  }
-  ${({ theme }) => theme.mediaQueries.small} {
-    margin-top: 1.2rem;
-    padding: 1.6rem;
-  }
 `;
 
 const ErrorMessage = styled.div`
@@ -99,12 +76,195 @@ const ErrorMessage = styled.div`
   }
 `;
 
+const MainContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  flex-wrap: wrap;
+  padding: 10px;
+  width: 100%;
+`;
+
+const ContainerRow = styled.div`
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  width: 100%;
+  margin: 5px;
+  padding: 10px;
+`;
+
+const Title = styled.h2`
+  font-size: ${({ theme }) => theme.fontSizes.large};
+  margin: 0;
+  ${({ theme }) => theme.mediaQueries.small} {
+    font-size: ${({ theme }) => theme.fontSizes.text};
+  }
+`;
+
+const SessionBody = styled.div`
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  padding: 20px 0px 10px 0px;
+`;
+
+const SessionRow = styled.div`
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-top: 5px;
+  padding: 2px;
+`;
+
+const SessionsCard = styled.div<{ disabled: boolean }>`
+  display: flex;
+  flex-direction: column;
+  width: 500px;
+  background-color: ${({ theme }) => theme.colors.card.default};
+  margin-top: 2.4rem;
+  margin-bottom: 2.4rem;
+  padding: 2.4rem;
+  border: 1px solid ${({ theme }) => theme.colors.border.default};
+  border-radius: ${({ theme }) => theme.radii.default};
+  box-shadow: ${({ theme }) => theme.shadows.default};
+  filter: opacity(${({ disabled }) => (disabled ? '.4' : '1')});
+  align-self: stretch;
+  ${({ theme }) => theme.mediaQueries.small} {
+    width: 100%;
+    margin-top: 1.2rem;
+    margin-bottom: 1.2rem;
+    padding: 1.6rem;
+  }
+`;
+
+const TransactionsCard = styled.div<{ disabled: boolean }>`
+  display: flex;
+  flex-direction: column;
+  width: 500px;
+  background-color: ${({ theme }) => theme.colors.card.default};
+  margin-top: 2.4rem;
+  margin-bottom: 2.4rem;
+  padding: 2.4rem;
+  border: 1px solid ${({ theme }) => theme.colors.border.default};
+  border-radius: ${({ theme }) => theme.radii.default};
+  box-shadow: ${({ theme }) => theme.shadows.default};
+  filter: opacity(${({ disabled }) => (disabled ? '.4' : '1')});
+  align-self: stretch;
+  ${({ theme }) => theme.mediaQueries.small} {
+    width: 100%;
+    margin-top: 1.2rem;
+    margin-bottom: 1.2rem;
+    padding: 1.6rem;
+  }
+`;
+
+const TransactionHeader = styled.div`
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+`;
+
+const TransactionBody = styled.div`
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  padding: 20px 0px 10px 0px;
+`;
+
+const SessionOverviewMessage = styled.div`
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin-top: 40px;
+  padding: 10px;
+`;
+
+const SessionHeader = styled.div`
+  display: flex;
+  flex-direction: row;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: center;
+`;
+
 const Index = () => {
   const [state, dispatch] = useContext(MetaMaskContext);
+  const [smartAccount, saDispatch] = useContext(SmartAccountContext);
 
+  // const notify = (message: string, options?: any) => toast(message, options);
+
+  async function _getAndSaveSessionInfo() {
+    if (smartAccount.sessionModuleEnabled) {
+      const sessionInfo: any = await getSessionInfo();
+      console.log('Session info is : ', sessionInfo);
+      if (sessionInfo) {
+        saDispatch({
+          type: SmartAccountActions.SetSessionKey,
+          payload: {
+            key: sessionInfo.sessionKey,
+            owner: sessionInfo.owner,
+          },
+        });
+      }
+    }
+  }
+
+  useEffect(() => {
+    console.log('State udpated for session', smartAccount.sessionInfo);
+  }, [smartAccount.sessionInfo]);
+
+  useEffect(() => {
+    _getAndSaveSessionInfo();
+  }, [smartAccount.sessionModuleEnabled]);
+
+  useEffect(() => {
+    async function checkSessionModue() {
+      // if (smartAccount.address) {
+      //   const isSessinoModuleEnabled = await isSessionModuleEnabled(
+      //     smartAccount.address,
+      //   );
+      //   if (isSessinoModuleEnabled) {
+      //     saDispatch({
+      //       type: SmartAccountActions.SetSessionModuleEnabled,
+      //       payload: true,
+      //     });
+      //
+      //     // TODO
+      //     saDispatch({
+      //       type: SmartAccountActions.SetModule,
+      //       payload: {
+      //         address: '0x2b5Dca28Ad0b7301b78ee1218b1bFC4A7B22E3bC',
+      //         enabled: true,
+      //         name: 'Session Module',
+      //       },
+      //     });
+      //   }
+      // }
+    }
+    checkSessionModue();
+  }, [smartAccount.address]);
+
+  useEffect(() => {
+    async function checkSessionModue() {
+      if (smartAccount.sessionModuleEnabled) {
+        const sessionInfo = await getSessionInfo();
+        if (sessionInfo) {
+          saDispatch({
+            type: SmartAccountActions.SetSessionModuleEnabled,
+            payload: true,
+          });
+        }
+      }
+    }
+    checkSessionModue();
+  }, [smartAccount.sessionModuleEnabled]);
+
+  // event
   const handleConnectClick = async () => {
     try {
-      await connectSnap();
       const installedSnap = await getSnap();
 
       dispatch({
@@ -115,6 +275,75 @@ const Index = () => {
       console.error(e);
       dispatch({ type: MetamaskActions.SetError, payload: e });
     }
+  };
+
+  const handleEnableSmartAccountClick = async () => {
+    try {
+      console.log('Sending useSmart Account event');
+      const _smartAccount = await useSmartAccount();
+      console.log('got smart account', _smartAccount);
+      if (_smartAccount) {
+        saDispatch({
+          type: SmartAccountActions.SetSmartAccount,
+          payload: {
+            _smartAccount,
+          },
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      dispatch({ type: MetamaskActions.SetError, payload: e });
+    }
+  };
+
+  const handleEnableSessionClick = async () => {
+    // try {
+    //   const txHash: any = await enableSessionOnSmartAccount();
+    //   if (txHash) {
+    //     const { emitter } = bncNotify.hash(txHash);
+    //     emitter.on('txConfirmed', () => {
+    //       notify(
+    //         'Session Module successfully added. Now start creating sessions for auto approvals.',
+    //       );
+    //     });
+    //   }
+    // } catch (e) {
+    //   console.error(e);
+    //   dispatch({ type: MetamaskActions.SetError, payload: e });
+    // }
+  };
+
+  const handleCreateSessionClick = async () => {
+    // try {
+    //   const txHash: any = await createSessionForSmartAccount();
+    //   if (txHash) {
+    //     const { emitter } = bncNotify.hash(txHash);
+    //     emitter.on('txConfirmed', () => {
+    //       notify(
+    //         'Session key added on chain. Now you can initiate transactions on your contract without needing to sign every interaction',
+    //       );
+    //     });
+    //   }
+    //   _getAndSaveSessionInfo();
+    // } catch (e) {
+    //   console.error(e);
+    //   dispatch({ type: MetamaskActions.SetError, payload: e });
+    // }
+  };
+
+  const handleSessionInteractonClick = async () => {
+    // try {
+    //   const txHash: any = await sendSessionTransaction();
+    //   if (txHash) {
+    //     const { emitter } = bncNotify.hash(txHash);
+    //     emitter.on('txConfirmed', () => {
+    //       notify('Token transfer via session key successful.');
+    //     });
+    //   }
+    // } catch (e) {
+    //   console.error(e);
+    //   dispatch({ type: MetamaskActions.SetError, payload: e });
+    // }
   };
 
   const handleSendHelloClick = async () => {
@@ -129,11 +358,8 @@ const Index = () => {
   return (
     <Container>
       <Heading>
-        Welcome to <Span>template-snap</Span>
+        Welcome to <Span>EthStorage Snap</Span>
       </Heading>
-      <Subtitle>
-        Get started by editing <code>src/index.ts</code>
-      </Subtitle>
       <CardContainer>
         {state.error && (
           <ErrorMessage>
@@ -167,49 +393,118 @@ const Index = () => {
             disabled={!state.isFlask}
           />
         )}
-        {shouldDisplayReconnectButton(state.installedSnap) && (
-          <Card
-            content={{
-              title: 'Reconnect',
-              description:
-                'While connected to a local running snap this button will always be displayed in order to update the snap if a change is made.',
-              button: (
-                <ReconnectButton
-                  onClick={handleConnectClick}
+
+        <MainContainer>
+          <ContainerRow>
+            <div>
+              {smartAccount?.address === undefined && (
+                <Card
+                  content={{
+                    title: 'Discover Smart Accounts',
+                    description:
+                      'Explore more benefits (social recovery and session keys) with smart accounts',
+                    button: (
+                      <SendHelloButton
+                        onClick={handleEnableSmartAccountClick}
+                        disabled={!state.installedSnap}
+                      />
+                    ),
+                  }}
                   disabled={!state.installedSnap}
+                  fullWidth={false}
                 />
-              ),
-            }}
-            disabled={!state.installedSnap}
-          />
-        )}
-        <Card
-          content={{
-            title: 'Send Hello message',
-            description:
-              'Display a custom message within a confirmation screen in MetaMask.',
-            button: (
-              <SendHelloButton
-                onClick={handleSendHelloClick}
-                disabled={!state.installedSnap}
-              />
-            ),
-          }}
-          disabled={!state.installedSnap}
-          fullWidth={
-            state.isFlask &&
-            Boolean(state.installedSnap) &&
-            !shouldDisplayReconnectButton(state.installedSnap)
-          }
-        />
-        <Notice>
-          <p>
-            Please note that the <b>snap.manifest.json</b> and{' '}
-            <b>package.json</b> must be located in the server root directory and
-            the bundle must be hosted at the location specified by the location
-            field.
-          </p>
-        </Notice>
+              )}
+              {smartAccount?.address !== undefined && (
+                <Card
+                  content={{
+                    title: 'Discover Smart Accounts',
+                    description: `Smart Account: ${smartAccount.address}`,
+                  }}
+                  disabled={!state.installedSnap}
+                  fullWidth={false}
+                />
+              )}
+
+              {!smartAccount.sessionModuleEnabled && (
+                <Card
+                  content={{
+                    title: 'Enable Session Module',
+                    description: 'Set up temporary session for auto approvals',
+                    button: (
+                      <EnableModuleButton
+                        onClick={handleEnableSessionClick}
+                        disabled={!state.installedSnap}
+                      />
+                    ),
+                  }}
+                  disabled={!smartAccount.address}
+                  fullWidth={false}
+                />
+              )}
+              {smartAccount.sessionModuleEnabled && (
+                <Card
+                  content={{
+                    title: 'Enable Session Module',
+                    description:
+                      '✅ Session Module is already enabled on your smart account',
+                  }}
+                  disabled={!smartAccount.address}
+                  fullWidth={false}
+                />
+              )}
+            </div>
+            <SessionsCard disabled={!smartAccount.sessionModuleEnabled}>
+              <SessionHeader>
+                <Title>Sessions</Title>
+                <button
+                  onClick={handleCreateSessionClick}
+                  disabled={!smartAccount.sessionModuleEnabled}
+                >
+                  + Create Session
+                </button>
+              </SessionHeader>
+              <SessionBody>
+                {smartAccount.sessionInfo &&
+                  smartAccount.sessionInfo.length > 0 && (
+                    <SessionRow>
+                      <div>{`${smartAccount.sessionInfo[0].key}`}</div>
+                      <div>Active</div>
+                    </SessionRow>
+                  )}
+
+                {smartAccount.sessionInfo &&
+                  smartAccount.sessionInfo.length === 0 && (
+                    <SessionOverviewMessage>
+                      You have not created any sessions. Click + Create Session
+                      button to create your session.
+                    </SessionOverviewMessage>
+                  )}
+              </SessionBody>
+            </SessionsCard>
+          </ContainerRow>
+          <ContainerRow>
+            <TransactionsCard disabled={smartAccount.sessionInfo.length === 0}>
+              <TransactionHeader>
+                <Title>Interact with your Wallet via Session Keys</Title>
+              </TransactionHeader>
+              <TransactionBody></TransactionBody>
+            </TransactionsCard>
+            <Card
+              content={{
+                title: 'Interact with your Wallet via Session Keys',
+                description: 'Session approved actions: USDC transfer',
+                button: (
+                  <InteractSessionButton
+                    onClick={handleSessionInteractonClick}
+                    disabled={!state.installedSnap}
+                  />
+                ),
+              }}
+              disabled={!state.installedSnap}
+              fullWidth={true}
+            />
+          </ContainerRow>
+        </MainContainer>
       </CardContainer>
     </Container>
   );
