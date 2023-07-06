@@ -125,6 +125,10 @@ export const HeaderButtons = ({
   );
 };
 
+export const CreateButton = (props: ComponentProps<typeof Button>) => {
+  return <Button {...props}>Create</Button>;
+};
+
 export const EnableModuleButton = (props: ComponentProps<typeof Button>) => {
   return <Button {...props}>Enable Session Module</Button>;
 };

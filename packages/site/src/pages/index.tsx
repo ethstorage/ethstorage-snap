@@ -6,19 +6,17 @@ import {
   SmartAccountContext,
 } from '../hooks/SmartAccountContext';
 import {
-  connectSnap,
-  getSnap,
-  sendHello,
   getSessionInfo,
-  useSmartAccount,
+  createSmartAccount,
+  enableSession, getSmartAccount,
 } from '../utils';
 import {
   ConnectButton,
   InstallFlaskButton,
   EnableModuleButton,
   InteractSessionButton,
-  SendHelloButton,
   Card,
+  CreateButton,
 } from '../components';
 
 const Container = styled.div`
@@ -90,7 +88,7 @@ const ContainerRow = styled.div`
   flex-wrap: wrap;
   justify-content: space-between;
   width: 100%;
-  margin: 5px;
+  margin: 0px;
   padding: 10px;
 `;
 
@@ -136,42 +134,6 @@ const SessionsCard = styled.div<{ disabled: boolean }>`
     margin-bottom: 1.2rem;
     padding: 1.6rem;
   }
-`;
-
-const TransactionsCard = styled.div<{ disabled: boolean }>`
-  display: flex;
-  flex-direction: column;
-  width: 500px;
-  background-color: ${({ theme }) => theme.colors.card.default};
-  margin-top: 2.4rem;
-  margin-bottom: 2.4rem;
-  padding: 2.4rem;
-  border: 1px solid ${({ theme }) => theme.colors.border.default};
-  border-radius: ${({ theme }) => theme.radii.default};
-  box-shadow: ${({ theme }) => theme.shadows.default};
-  filter: opacity(${({ disabled }) => (disabled ? '.4' : '1')});
-  align-self: stretch;
-  ${({ theme }) => theme.mediaQueries.small} {
-    width: 100%;
-    margin-top: 1.2rem;
-    margin-bottom: 1.2rem;
-    padding: 1.6rem;
-  }
-`;
-
-const TransactionHeader = styled.div`
-  display: flex;
-  flex-direction: row;
-  flex-wrap: wrap;
-  justify-content: space-between;
-  align-items: center;
-`;
-
-const TransactionBody = styled.div`
-  display: flex;
-  width: 100%;
-  flex-direction: column;
-  padding: 20px 0px 10px 0px;
 `;
 
 const SessionOverviewMessage = styled.div`
@@ -221,6 +183,21 @@ const Index = () => {
   }, [smartAccount.sessionModuleEnabled]);
 
   useEffect(() => {
+    async function checkSmart() {
+      const _smartAccount = await getSmartAccount();
+      if (_smartAccount) {
+        saDispatch({
+          type: SmartAccountActions.SetSmartAccount,
+          payload: {
+            _smartAccount,
+          },
+        });
+      }
+    }
+    checkSmart();
+  }, [state.installedSnap]);
+
+  useEffect(() => {
     async function checkSessionModue() {
       // if (smartAccount.address) {
       //   const isSessinoModuleEnabled = await isSessionModuleEnabled(
@@ -262,14 +239,13 @@ const Index = () => {
     checkSessionModue();
   }, [smartAccount.sessionModuleEnabled]);
 
+  // ************
   // event
+  // ************
   const handleConnectClick = async () => {
     try {
-      const installedSnap = await getSnap();
-
-      dispatch({
-        type: MetamaskActions.SetInstalled,
-        payload: installedSnap,
+      const accounts = await window.ethereum.request({
+        method: 'eth_requestAccounts',
       });
     } catch (e) {
       console.error(e);
@@ -277,11 +253,9 @@ const Index = () => {
     }
   };
 
-  const handleEnableSmartAccountClick = async () => {
+  const handleCreateSmartAccountClick = async () => {
     try {
-      console.log('Sending useSmart Account event');
-      const _smartAccount = await useSmartAccount();
-      console.log('got smart account', _smartAccount);
+      const _smartAccount = await createSmartAccount();
       if (_smartAccount) {
         saDispatch({
           type: SmartAccountActions.SetSmartAccount,
@@ -297,20 +271,18 @@ const Index = () => {
   };
 
   const handleEnableSessionClick = async () => {
-    // try {
-    //   const txHash: any = await enableSessionOnSmartAccount();
-    //   if (txHash) {
-    //     const { emitter } = bncNotify.hash(txHash);
-    //     emitter.on('txConfirmed', () => {
-    //       notify(
-    //         'Session Module successfully added. Now start creating sessions for auto approvals.',
-    //       );
-    //     });
-    //   }
-    // } catch (e) {
-    //   console.error(e);
-    //   dispatch({ type: MetamaskActions.SetError, payload: e });
-    // }
+    try {
+      const txHash: any = await enableSession(smartAccount.address);
+      if (txHash) {
+        saDispatch({
+          type: SmartAccountActions.SetSessionModuleEnabled,
+          payload: true,
+        });
+      }
+    } catch (e) {
+      console.error(e);
+      dispatch({ type: MetamaskActions.SetError, payload: e });
+    }
   };
 
   const handleCreateSessionClick = async () => {
@@ -346,15 +318,6 @@ const Index = () => {
     // }
   };
 
-  const handleSendHelloClick = async () => {
-    try {
-      await sendHello();
-    } catch (e) {
-      console.error(e);
-      dispatch({ type: MetamaskActions.SetError, payload: e });
-    }
-  };
-
   return (
     <Container>
       <Heading>
@@ -377,24 +340,24 @@ const Index = () => {
             fullWidth
           />
         )}
-        {!state.installedSnap && (
-          <Card
-            content={{
-              title: 'Connect',
-              description:
-                'Get started by connecting to and installing the example snap.',
-              button: (
-                <ConnectButton
-                  onClick={handleConnectClick}
-                  disabled={!state.isFlask}
-                />
-              ),
-            }}
-            disabled={!state.isFlask}
-          />
-        )}
 
         <MainContainer>
+          <ContainerRow>
+            <Card
+              content={{
+                title: 'Connect',
+                description:
+                  'Get started by connecting to and installing the example snap.',
+                button: (
+                  <ConnectButton
+                    onClick={handleConnectClick}
+                    disabled={!state.installedSnap}
+                  />
+                ),
+              }}
+              disabled={!state.installedSnap}
+            />
+          </ContainerRow>
           <ContainerRow>
             <div>
               {smartAccount?.address === undefined && (
@@ -404,8 +367,8 @@ const Index = () => {
                     description:
                       'Explore more benefits (social recovery and session keys) with smart accounts',
                     button: (
-                      <SendHelloButton
-                        onClick={handleEnableSmartAccountClick}
+                      <CreateButton
+                        onClick={handleCreateSmartAccountClick}
                         disabled={!state.installedSnap}
                       />
                     ),
@@ -483,24 +446,18 @@ const Index = () => {
             </SessionsCard>
           </ContainerRow>
           <ContainerRow>
-            <TransactionsCard disabled={smartAccount.sessionInfo.length === 0}>
-              <TransactionHeader>
-                <Title>Interact with your Wallet via Session Keys</Title>
-              </TransactionHeader>
-              <TransactionBody></TransactionBody>
-            </TransactionsCard>
             <Card
               content={{
                 title: 'Interact with your Wallet via Session Keys',
-                description: 'Session approved actions: USDC transfer',
+                description: '',
                 button: (
                   <InteractSessionButton
                     onClick={handleSessionInteractonClick}
-                    disabled={!state.installedSnap}
+                    disabled={smartAccount.sessionInfo.length === 0}
                   />
                 ),
               }}
-              disabled={!state.installedSnap}
+              disabled={smartAccount.sessionInfo.length === 0}
               fullWidth={true}
             />
           </ContainerRow>
