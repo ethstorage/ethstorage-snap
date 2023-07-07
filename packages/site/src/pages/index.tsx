@@ -12,6 +12,7 @@ import {
   getSmartAccount,
   isSessionModuleEnabled,
   createSessionForSmartAccount,
+  sendSessionTransaction,
 } from '../utils';
 import {
   ConnectButton,
@@ -270,7 +271,9 @@ const Index = () => {
 
   const handleCreateSessionClick = async () => {
     try {
-      const txHash: any = await createSessionForSmartAccount();
+      const txHash: any = await createSessionForSmartAccount(
+        smartAccount.address as string,
+      );
       if (txHash) {
         _getAndSaveSessionInfo();
       }
@@ -282,17 +285,11 @@ const Index = () => {
 
   const handleSessionInteractonClick = async () => {
     // try {
-    //   const txHash: any = await sendSessionTransaction();
-    //   if (txHash) {
-    //     const { emitter } = bncNotify.hash(txHash);
-    //     emitter.on('txConfirmed', () => {
-    //       notify('Token transfer via session key successful.');
-    //     });
-    //   }
     // } catch (e) {
     //   console.error(e);
     //   dispatch({ type: MetamaskActions.SetError, payload: e });
     // }
+    await sendSessionTransaction(smartAccount.sessionInfo[0].key, '/file');
   };
 
   return (
