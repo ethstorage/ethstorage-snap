@@ -8,7 +8,10 @@ import {
 import {
   getSessionInfo,
   createSmartAccount,
-  enableSession, getSmartAccount,
+  enableSession,
+  getSmartAccount,
+  isSessionModuleEnabled,
+  createSessionForSmartAccount,
 } from '../utils';
 import {
   ConnectButton,
@@ -156,8 +159,6 @@ const Index = () => {
   const [state, dispatch] = useContext(MetaMaskContext);
   const [smartAccount, saDispatch] = useContext(SmartAccountContext);
 
-  // const notify = (message: string, options?: any) => toast(message, options);
-
   async function _getAndSaveSessionInfo() {
     if (smartAccount.sessionModuleEnabled) {
       const sessionInfo: any = await getSessionInfo();
@@ -175,23 +176,17 @@ const Index = () => {
   }
 
   useEffect(() => {
-    console.log('State udpated for session', smartAccount.sessionInfo);
-  }, [smartAccount.sessionInfo]);
-
-  useEffect(() => {
-    _getAndSaveSessionInfo();
-  }, [smartAccount.sessionModuleEnabled]);
-
-  useEffect(() => {
     async function checkSmart() {
-      const _smartAccount = await getSmartAccount();
-      if (_smartAccount) {
-        saDispatch({
-          type: SmartAccountActions.SetSmartAccount,
-          payload: {
-            _smartAccount,
-          },
-        });
+      if (state.installedSnap) {
+        const _smartAccount = await getSmartAccount();
+        if (_smartAccount) {
+          saDispatch({
+            type: SmartAccountActions.SetSmartAccount,
+            payload: {
+              _smartAccount,
+            },
+          });
+        }
       }
     }
     checkSmart();
@@ -199,44 +194,32 @@ const Index = () => {
 
   useEffect(() => {
     async function checkSessionModue() {
-      // if (smartAccount.address) {
-      //   const isSessinoModuleEnabled = await isSessionModuleEnabled(
-      //     smartAccount.address,
-      //   );
-      //   if (isSessinoModuleEnabled) {
-      //     saDispatch({
-      //       type: SmartAccountActions.SetSessionModuleEnabled,
-      //       payload: true,
-      //     });
-      //
-      //     // TODO
-      //     saDispatch({
-      //       type: SmartAccountActions.SetModule,
-      //       payload: {
-      //         address: '0x2b5Dca28Ad0b7301b78ee1218b1bFC4A7B22E3bC',
-      //         enabled: true,
-      //         name: 'Session Module',
-      //       },
-      //     });
-      //   }
-      // }
-    }
-    checkSessionModue();
-  }, [smartAccount.address]);
-
-  useEffect(() => {
-    async function checkSessionModue() {
-      if (smartAccount.sessionModuleEnabled) {
-        const sessionInfo = await getSessionInfo();
-        if (sessionInfo) {
+      if (smartAccount.address) {
+        const isSessinoModuleEnabled: boolean = await isSessionModuleEnabled(
+          smartAccount.address,
+        );
+        if (isSessinoModuleEnabled) {
           saDispatch({
             type: SmartAccountActions.SetSessionModuleEnabled,
             payload: true,
+          });
+
+          saDispatch({
+            type: SmartAccountActions.SetModule,
+            payload: {
+              address: '0x2b5Dca28Ad0b7301b78ee1218b1bFC4A7B22E3bC',
+              enabled: true,
+              name: 'Session Module',
+            },
           });
         }
       }
     }
     checkSessionModue();
+  }, [smartAccount.address]);
+
+  useEffect(() => {
+    _getAndSaveSessionInfo();
   }, [smartAccount.sessionModuleEnabled]);
 
   // ************
@@ -286,21 +269,15 @@ const Index = () => {
   };
 
   const handleCreateSessionClick = async () => {
-    // try {
-    //   const txHash: any = await createSessionForSmartAccount();
-    //   if (txHash) {
-    //     const { emitter } = bncNotify.hash(txHash);
-    //     emitter.on('txConfirmed', () => {
-    //       notify(
-    //         'Session key added on chain. Now you can initiate transactions on your contract without needing to sign every interaction',
-    //       );
-    //     });
-    //   }
-    //   _getAndSaveSessionInfo();
-    // } catch (e) {
-    //   console.error(e);
-    //   dispatch({ type: MetamaskActions.SetError, payload: e });
-    // }
+    try {
+      const txHash: any = await createSessionForSmartAccount();
+      if (txHash) {
+        _getAndSaveSessionInfo();
+      }
+    } catch (e) {
+      console.error(e);
+      dispatch({ type: MetamaskActions.SetError, payload: e });
+    }
   };
 
   const handleSessionInteractonClick = async () => {

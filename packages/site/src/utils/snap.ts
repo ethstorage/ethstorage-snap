@@ -5,12 +5,20 @@ import { GetSnapsResponse, Snap } from '../types';
 export const Abi = [
   'event SmartWalletCreated(address)',
   'function create() public payable',
-  'function enableModule(address module) public',
   'function getAAWallet() view public returns(address)',
+  'function enableModule(address module) public',
+  'function isModuleEnabled(address module) public view returns (bool)',
 ];
 
 const factoryAddress = '0x642744e069495828526a063533217F8E50A6C443';
 const sessionAddress = '0x2Ce097F05ba8f823b32C5039f9C4a035e9816C68';
+
+export const getEOAAccount = async (): Promise<string> => {
+  const accounts: any = await window.ethereum.request({
+    method: 'eth_accounts',
+  });
+  return accounts[0];
+};
 
 /**
  * Get the installed snaps in MetaMask.
@@ -90,14 +98,25 @@ export const getSmartAccount = async () => {
   let factoryContract = new ethers.Contract(factoryAddress, Abi, provider);
   factoryContract = factoryContract.connect(provider.getSigner());
   const smartAccount = await factoryContract.getAAWallet();
-  if (smartAccount && smartAccount != '0x0000000000000000000000000000000000000000') {
-    const owner = window.ethereum.selectedAddress;
+  if (
+    smartAccount &&
+    // eslint-disable-next-line eqeqeq
+    smartAccount != '0x0000000000000000000000000000000000000000'
+  ) {
+    const owner = await getEOAAccount();
     return {
       address: smartAccount,
       owner,
     };
   }
   return undefined;
+};
+
+export const isSessionModuleEnabled = async (address: any) => {
+  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
+  let factoryContract = new ethers.Contract(address, Abi, provider);
+  factoryContract = factoryContract.connect(provider.getSigner());
+  return await factoryContract.isModuleEnabled(sessionAddress);
 };
 
 export const createSmartAccount = async () => {
@@ -112,11 +131,12 @@ export const createSmartAccount = async () => {
 
   if (receipt.status) {
     const smartAccount = await factoryContract.getAAWallet();
-    if (smartAccount && smartAccount != '0x0000000000000000000000000000000000000000') {
-      if (!window.ethereum.selectedAddress) {
-        await window.ethereum.enable();
-      }
-      const owner = window.ethereum.selectedAddress;
+    if (
+      smartAccount &&
+      // eslint-disable-next-line eqeqeq
+      smartAccount != '0x0000000000000000000000000000000000000000'
+    ) {
+      const owner = await getEOAAccount();
       return {
         address: smartAccount,
         owner,
@@ -127,11 +147,28 @@ export const createSmartAccount = async () => {
 };
 
 export const enableSession = async (address: any) => {
-  console.log("----",address);
   const provider = new ethers.providers.Web3Provider(window.ethereum as any);
   let factoryContract = new ethers.Contract(address, Abi, provider);
   factoryContract = factoryContract.connect(provider.getSigner());
   const tx = await factoryContract.enableModule(sessionAddress);
   const receipt = await tx.wait();
   return receipt.status;
+};
+
+export const createSessionInfo = async () => {
+  console.log('create session info');
+  return await window.ethereum.request({
+    method: 'wallet_invokeSnap',
+    params: {
+      snapId: defaultSnapOrigin,
+      request: { method: 'create_session' },
+    },
+  });
+};
+
+export const createSessionForSmartAccount = async () => {
+  console.log(await getEOAAccount());
+  const session = await createSessionInfo();
+  console.log(session);
+  return session;
 };

@@ -1,5 +1,5 @@
 {
-  "name": "snap",
+  "name": "@metamask/ethstorage-snap",
   "version": "0.1.0",
   "private": true,
   "description": "The 'Hello, world!' of MetaMask Snaps, now written in TypeScript.",
@@ -27,9 +27,15 @@
     "test": "jest"
   },
   "dependencies": {
+    "@biconomy-sdk/core-types": "1.0.14",
+    "@biconomy-sdk/relayer": "1.0.14",
+    "@biconomy-sdk/smart-account": "^1.0.14",
+    "@ethersproject/abstract-signer": "^5.7.0",
+    "@ethersproject/providers": "^5.7.1",
     "@metamask/snaps-types": "^0.32.2",
     "@metamask/snaps-ui": "^0.32.2",
-    "buffer": "^6.0.3"
+    "buffer": "^6.0.3",
+    "ethers": "^5.7.1"
   },
   "devDependencies": {
     "@jest/globals": "^29.5.0",
