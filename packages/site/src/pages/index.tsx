@@ -1,4 +1,4 @@
-import { useContext, useEffect } from 'react';
+import {useContext, useEffect, useState} from 'react';
 import styled from 'styled-components';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
 import {
@@ -160,6 +160,22 @@ const Index = () => {
   const [state, dispatch] = useContext(MetaMaskContext);
   const [smartAccount, saDispatch] = useContext(SmartAccountContext);
 
+  const [account, setAccount] = useState(null);
+
+  useEffect(() => {
+    async function checkSmart() {
+      if (state.installedSnap) {
+        const accounts: any = await window.ethereum.request({
+          method: 'eth_requestAccounts',
+        });
+        if (accounts && accounts.length > 0) {
+          setAccount(accounts[0]);
+        }
+      }
+    }
+    checkSmart();
+  }, [state.installedSnap]);
+
   async function _getAndSaveSessionInfo() {
     if (smartAccount.sessionModuleEnabled) {
       const sessionInfo: any = await getSessionInfo();
@@ -178,7 +194,7 @@ const Index = () => {
 
   useEffect(() => {
     async function checkSmart() {
-      if (state.installedSnap) {
+      if (state.installedSnap && account) {
         const _smartAccount = await getSmartAccount();
         if (_smartAccount) {
           saDispatch({
@@ -191,7 +207,7 @@ const Index = () => {
       }
     }
     checkSmart();
-  }, [state.installedSnap]);
+  }, [state.installedSnap, account]);
 
   useEffect(() => {
     async function checkSessionModue() {
@@ -228,9 +244,12 @@ const Index = () => {
   // ************
   const handleConnectClick = async () => {
     try {
-      const accounts = await window.ethereum.request({
+      const accounts: any = await window.ethereum.request({
         method: 'eth_requestAccounts',
       });
+      if (accounts && accounts.length > 0) {
+        setAccount(accounts[0]);
+      }
     } catch (e) {
       console.error(e);
       dispatch({ type: MetamaskActions.SetError, payload: e });
@@ -325,11 +344,11 @@ const Index = () => {
                 button: (
                   <ConnectButton
                     onClick={handleConnectClick}
-                    disabled={!state.installedSnap}
+                    disabled={account !== null}
                   />
                 ),
               }}
-              disabled={!state.installedSnap}
+              disabled={account !== null}
             />
           </ContainerRow>
           <ContainerRow>
