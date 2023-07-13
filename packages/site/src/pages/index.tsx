@@ -174,15 +174,16 @@ const Index = () => {
   }, [state.installedSnap]);
 
   async function _getAndSaveSessionInfo() {
-    if (smartAccount.signer) {
+    if (smartAccount.address) {
       const sessionInfo: any = await getSessionInfo();
       console.log('Session info is : ', sessionInfo);
       if (sessionInfo) {
         saDispatch({
           type: SmartAccountActions.SetSessionKey,
           payload: {
-            key: sessionInfo.sessionKey,
             owner: sessionInfo.owner,
+            key: sessionInfo.sessionKey,
+            sessionSigner: sessionInfo.sessionKeySigner,
           },
         });
       }
@@ -247,11 +248,8 @@ const Index = () => {
 
   const handleCreateSessionClick = async () => {
     try {
-      const txHash: any = await createSessionForSmartAccount(
-        smartAccount.address as string,
-        smartAccount.signer,
-      );
-      if (txHash) {
+      const status: any = await createSessionForSmartAccount();
+      if (status) {
         _getAndSaveSessionInfo();
       }
     } catch (e) {
@@ -261,12 +259,15 @@ const Index = () => {
   };
 
   const handleSessionInteractonClick = async () => {
-    // try {
-    // } catch (e) {
-    //   console.error(e);
-    //   dispatch({ type: MetamaskActions.SetError, payload: e });
-    // }
-    await sendSessionTransaction(smartAccount.sessionInfo[0].key, '/file');
+    try {
+      await sendSessionTransaction(
+        smartAccount.sessionInfo[0].sessionSigner,
+        '/file',
+      );
+    } catch (e) {
+      console.error(e);
+      dispatch({ type: MetamaskActions.SetError, payload: e });
+    }
   };
 
   return (
@@ -339,12 +340,12 @@ const Index = () => {
                 />
               )}
             </div>
-            <SessionsCard disabled={!smartAccount.signer}>
+            <SessionsCard disabled={!smartAccount.address}>
               <SessionHeader>
                 <Title>Sessions</Title>
                 <button
                   onClick={handleCreateSessionClick}
-                  disabled={!smartAccount.signer}
+                  disabled={!smartAccount.address}
                 >
                   + Create Session
                 </button>

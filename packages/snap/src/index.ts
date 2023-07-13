@@ -1,161 +1,90 @@
 import { OnRpcRequestHandler } from '@metamask/snaps-types';
 import { panel, text } from '@metamask/snaps-ui';
-import { ethers } from 'ethers';
 
-export type CreateAAParams = {
+export type AARpcQuestParams = {
   owner: string;
   smartAddress: string;
-  sessionInfo?: string;
+  sessionInfo: string;
 };
 
-export type AAWalletStorage = {
-  items: CreateAAParams[];
+export type AAWallet = {
+  owner: string;
+  smartAddress: string;
+  sessionInfo: string;
 };
 
-const getStorageInfo = async () => {
+export type AAWalletState = {
+  items: AAWallet[];
+};
+
+const getStorageState = async () => {
   return await snap.request({
     method: 'snap_manageState',
     params: { operation: 'get' },
   });
 };
 
-const storeInfo = async (newState: AAWalletStorage) => {
+const storeState = async (newState: AAWalletState) => {
   await snap.request({
     method: 'snap_manageState',
     params: { operation: 'update', newState },
   });
 };
 
-export const getAAWallet = async (owner: string) => {
-  const store = (await getStorageInfo()) as AAWalletStorage;
-  if (store) {
-    return store.items.find((value) => {
-      return value.owner === owner;
-    });
-  }
-  return undefined;
+export const getAAWalletByOwner = async (items: AAWallet[], owner: string) => {
+  return items.find((value) => {
+    return value.owner === owner;
+  });
 };
 
-export const saveAAWallet = async (owner: string, smartAddress: string) => {
-  let items: CreateAAParams[] = [];
-  const store = (await getStorageInfo()) as AAWalletStorage;
-  if (store?.items) {
-    items = store.items;
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].owner === owner) {
-        items[i] = { owner, smartAddress };
-        break;
-      }
+export const saveAAWalletByOwner = async (
+  items: AAWallet[],
+  owner: string,
+  smartAddress: string,
+) => {
+  let index = -1;
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].owner === owner) {
+      index = i;
+      break;
     }
-  } else {
-    items.push({ owner, smartAddress });
   }
-  return await storeInfo({
+
+  if (index === -1) {
+    items.push({ owner, smartAddress, sessionInfo: '' });
+  } else {
+    items[index] = { owner, smartAddress, sessionInfo: '' };
+  }
+  return await storeState({
     items,
   });
 };
 
-export const saveSessionKey = async (owner: string, sessionInfo: string) => {
-  const store = (await getStorageInfo()) as AAWalletStorage;
+export const saveSessionInfoByOwner = async (
+  items: AAWallet[],
+  owner: string,
+  sessionInfo: string,
+) => {
   let index = -1;
-  if (store) {
-    for (let i = 0; i < store.items.length; i++) {
-      if (store.items[i].owner === owner) {
-        index = i;
-        break;
-      }
+  for (let i = 0; i < items.length; i++) {
+    if (items[i].owner === owner) {
+      index = i;
+      break;
     }
   }
 
-  if (index !== -1) {
-    store.items[index] = {
-      owner,
-      sessionInfo,
-      smartAddress: store.items[index].smartAddress,
-    };
-    return await storeInfo({
-      items: store.items,
-    });
+  if (index === -1) {
+    throw new Error('No Create');
   }
-  throw new Error('No Create');
-};
 
-export const SESSION_TX_TYPE = {
-  SessionTransaction: [
-    { type: 'address', name: 'to' },
-    { type: 'uint256', name: 'amount' },
-    { type: 'bytes', name: 'data' },
-    { type: 'uint256', name: 'nonce' },
-  ],
-};
-
-export type SignAuthorizedTx = {
-  to: string;
-  amount: number;
-  data: string;
-  nonce: number;
-};
-
-export type SignTxType = {
-  owner: string;
-  sessionKeyModuleAddress: string;
-  tx: SignAuthorizedTx;
-};
-
-export type CreateSessionParams = {
-  owner: string;
-};
-
-export type SessionKeyStorage = {
-  owner: string;
-  sessionKey: string;
-  pk: string;
-};
-
-export const getSessionInfo = async () => {
-  return await snap.request({
-    method: 'snap_manageState',
-    params: { operation: 'get' },
-  });
-};
-
-export const storeSessionInfo = async (newState: SessionKeyStorage) => {
-  await snap.request({
-    method: 'snap_manageState',
-    params: { operation: 'update', newState },
-  });
-};
-
-export const clearSessionInfo = async () => {
-  return await snap.request({
-    method: 'snap_manageState',
-    params: { operation: 'clear' },
-  });
-};
-
-export const generateKeyPair = () => {
-  const keyPair = ethers.Wallet.createRandom();
-  return {
-    address: keyPair.address,
-    pk: keyPair.privateKey,
+  items[index] = {
+    owner,
+    smartAddress: items[index].smartAddress,
+    sessionInfo,
   };
-};
-
-export const signData = async (
-  owner: string,
-  sessionKeyModuleAddress: string,
-  authorizedTx: SignAuthorizedTx,
-) => {
-  const sessionInfo: any = await getSessionInfo();
-  if (sessionInfo.owner === owner) {
-    const signer = new ethers.Wallet(sessionInfo.pk);
-    return await signer._signTypedData(
-      { verifyingContract: sessionKeyModuleAddress, chainId: 3334 },
-      SESSION_TX_TYPE,
-      authorizedTx,
-    );
-  }
-  return undefined;
+  return await storeState({
+    items,
+  });
 };
 
 /**
@@ -172,6 +101,16 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
   origin,
   request,
 }) => {
+  const aaParams = request.params as AARpcQuestParams;
+
+  let state: AAWalletState | undefined = await getStorageState();
+  if (!state) {
+    state = {
+      items: [],
+    };
+    await storeState(state);
+  }
+
   switch (request.method) {
     case 'hello':
       return snap.request({
@@ -190,8 +129,10 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
 
     // aa account
     case 'get_aa': {
-      const aaParams = request.params as CreateAAParams;
-      const aaInfo: any = await getAAWallet(aaParams.owner);
+      const aaInfo: AAWallet | undefined = await getAAWalletByOwner(
+        state.items,
+        aaParams.owner,
+      );
       if (aaInfo) {
         return aaInfo.smartAddress;
       }
@@ -199,42 +140,40 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
     }
 
     case 'create_aa': {
-      const aaParams = request.params as CreateAAParams;
-      await saveAAWallet(aaParams.owner, aaParams.smartAddress);
+      await saveAAWalletByOwner(
+        state.items,
+        aaParams.owner,
+        aaParams.smartAddress,
+      );
       return true;
     }
 
-    // query
+    // session
     case 'get_session_info': {
-      const sessionInfo: any = await getSessionInfo();
-      if (sessionInfo) {
-        return {
-          sessionKey: sessionInfo.sessionKey,
-          owner: sessionInfo.owner,
-        };
+      const aaInfo: AAWallet | undefined = await getAAWalletByOwner(
+        state.items,
+        aaParams.owner,
+      );
+      if (aaInfo) {
+        return aaInfo.sessionInfo;
       }
       return undefined;
     }
 
     case 'create_session': {
-      const sessionParams = request.params as CreateSessionParams;
-      const keyPair = generateKeyPair();
       // const sessionParams = getSessionParams();
-      await storeSessionInfo({
-        owner: sessionParams.owner,
-        sessionKey: keyPair.address,
-        pk: keyPair.pk,
-      });
-      return {
-        sessionKey: keyPair.address,
-        owner: sessionParams.owner,
-      };
+      await saveSessionInfoByOwner(
+        state.items,
+        aaParams.owner,
+        aaParams.sessionInfo,
+      );
+      return true;
     }
 
-    case 'interact': {
-      const data = request.params as SignTxType;
-      return await signData(data.owner, data.sessionKeyModuleAddress, data.tx);
-    }
+    // case 'interact': {
+    //   const data = request.params as SignTxType;
+    //   return await signData(data.owner, data.sessionKeyModuleAddress, data.tx);
+    // }
 
     default:
       throw new Error('Method not found.');

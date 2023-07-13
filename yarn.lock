@@ -4988,8 +4988,6 @@ __metadata:
   version: 0.0.0-use.local
   resolution: "@metamask/ethstorage-snap@workspace:packages/snap"
   dependencies:
-    "@ethersproject/abstract-signer": ^5.7.0
-    "@ethersproject/providers": ^5.7.1
     "@jest/globals": ^29.5.0
     "@lavamoat/allow-scripts": ^2.0.3
     "@metamask/auto-changelog": ^2.6.0

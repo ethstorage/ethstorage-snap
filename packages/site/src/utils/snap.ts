@@ -1,39 +1,20 @@
-import { ethers, Wallet as EOAWallet } from 'ethers';
-import { LocalRelayer } from '@biconomy-sdk/relayer';
+import { Contract } from 'ethers';
+import { SessionSigner } from '@zerodevapp/sdk/dist/src/session/SessionSigner';
 import { defaultSnapOrigin } from '../config';
 import { GetSnapsResponse, Snap } from '../types';
-import { getZeroDevSigner, createSessionKey, getRPCProviderOwner, ZeroDevSigner } from '@zerodevapp/sdk';
+import {
+  getZeroDevSigner,
+  createSessionKey,
+  getRPCProviderOwner,
+  createSessionKeySigner,
+  ZeroDevSigner,
+} from '@zerodevapp/sdk';
 
-export const Abi = [
-  'event SmartWalletCreated(address)',
-  'function create() public payable',
-  'function getAAWallet() view public returns(address)',
-  'function enableModule(address module) public',
-  'function isModuleEnabled(address module) public view returns (bool)',
-  'function createSession(address sessionKey, address smartAddress, ' +
-    'tuple(address whitelistDestination,bytes4[] whitelistMethods,uint256 tokenAmount)[] permissions, ' +
-    'tuple(uint256 startTimestamp,uint256 endTimestamp,bool enable) sessionParam) external',
-];
-
-export const sessionAbi = [
-  'function getSessionInfo(address sessionKey) public view returns (tuple(uint256 startTimestamp,uint256 endTimestamp,bool enable,uint256 nonce) sessionInfo)',
-];
-
-// TODO test
-const iFaceEthStorage = new ethers.utils.Interface(
-  '[{"inputs": [],"name": "count","outputs": [{"internalType": "uint256", "name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "update","outputs": [],"stateMutability": "nonpayable","type": "function"}]',
-);
-
-const sessionAddress = '0x7aEcb0095C9511E4d4EF7ABA0dFcE5b16ad4e818';
-const ethStorageAddress = '0xFE932143c6612CbB4ebCF34Cef5C18696eca5186';
+const ethStorageAddress = '0xEc5d44B1Dc8CC127805b0DaE8d4BCe4fb48Ee4f7';
+const ethStorageAbi = ['function update() public', 'function update2() public'];
 
 const projectId = '28dda226-fb5f-4b9a-81a0-a95a690f27a2';
 const sessionKeyTime = 24 * 60 * 60;
-
-export type SessionKeyStorage = {
-  owner: string;
-  sessionKey: string;
-};
 
 export const getEOAAccount = async (): Promise<string> => {
   const accounts: any = await window.ethereum.request({
@@ -132,11 +113,9 @@ export const getSmartAccount = async () => {
   const owner = await getEOAAccount();
   const smartAccount = await querySmartAccount(owner);
   if (smartAccount) {
-    const signer = await getAccount();
     return {
       owner,
       address: smartAccount,
-      signer,
     };
   }
   return undefined;
@@ -167,23 +146,45 @@ export const createSmartAccount = async () => {
   return {
     owner,
     address,
-    signer,
   };
 };
 
 // session
-export const getSessionInfo = async () => {
-  console.log('invoking snap to get session info');
+const querySessionInfo = async (owner: string) => {
   return await window.ethereum.request({
     method: 'wallet_invokeSnap',
     params: {
       snapId: defaultSnapOrigin,
-      request: { method: 'get_session_info' },
+      request: {
+        method: 'get_session_info',
+        params: {
+          owner,
+        },
+      },
     },
   });
 };
 
-export const createSessionInfo = async (owner: string) => {
+export const getSessionInfo = async () => {
+  console.log('invoking snap to get session info');
+  const owner = await getEOAAccount();
+  const sessionInfo = await querySessionInfo(owner);
+  if (sessionInfo) {
+    const sessionKeySigner = await createSessionKeySigner({
+      projectId,
+      sessionKeyData: sessionInfo as string,
+    });
+    const sessionKey = await sessionKeySigner.getAddress();
+    return {
+      owner,
+      sessionKey,
+      sessionKeySigner,
+    };
+  }
+  return undefined;
+};
+
+export const saveSessionInfo = async (owner: string, sessionInfo: string) => {
   console.log('create session info');
   return await window.ethereum.request({
     method: 'wallet_invokeSnap',
@@ -193,71 +194,37 @@ export const createSessionInfo = async (owner: string) => {
         method: 'create_session',
         params: {
           owner,
+          sessionInfo,
         },
       },
     },
   });
 };
 
-export const getPermissionParams = (tokenAddress: string): any => {
-  // TODO
-  // const encodedData = iFaceEthStorage.encodeFunctionData('transfer', [
-  //   '0x1234567890123456789012345678901234567890',
-  //   '10000000000',
-  // ]);
-  const encodedData = iFaceEthStorage.encodeFunctionData('update');
-  const transferFunctionSignature = encodedData.slice(0, 10);
-  return {
-    whitelistDestination: tokenAddress,
-    whitelistMethods: [transferFunctionSignature],
-    tokenAmount: 0,
-  };
-};
-
-export const getSessionParams = (): any => {
-  const time = Math.floor(Date.now() / 1000);
-  return {
-    startTimestamp: time,
-    endTimestamp: time + 7 * 24 * 60 * 60,
-    enable: true,
-  };
-};
-
-export const pushSession = async (sessionKey: string, smartAddress: string) => {
-  const permissionParams = getPermissionParams(ethStorageAddress);
-  console.log('permission params ', permissionParams);
-  const sessionParams = getSessionParams();
-
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  let sessionContract = new ethers.Contract(sessionAddress, Abi, provider);
-  sessionContract = sessionContract.connect(provider.getSigner());
-  const tx = await sessionContract.createSession(
-    sessionKey,
-    smartAddress,
-    [permissionParams],
-    sessionParams,
-  );
-  const receipt = await tx.wait();
-  return receipt.status;
-};
-
-export const createSessionForSmartAccount = async (
-  smartAddress: string,
-  signer: ZeroDevSigner,
-) => {
+export const createSessionForSmartAccount = async () => {
   const owner = await getEOAAccount();
+  const zeroSigner: ZeroDevSigner = await getAccount();
+  const nftContract = new Contract(
+    ethStorageAddress,
+    ethStorageAbi,
+    zeroSigner,
+  );
+  // TODO
   const sessionKey = await createSessionKey(
-    signer,
+    zeroSigner,
     [
       {
         to: ethStorageAddress,
-        selectors: [], // all method
+        selectors: [
+          nftContract.interface.getSighash('update'),
+          // nftContract.interface.getSighash('function2'),
+        ], // [] is all method
       },
     ],
     sessionKeyTime,
   );
-  const sessionResult = await createSessionInfo(owner, sessionKey);
-
+  await saveSessionInfo(owner, sessionKey);
+  return true;
 };
 
 // *******
@@ -265,103 +232,19 @@ export const createSessionForSmartAccount = async (
 // ***send****
 // *******
 // *******
-export const getRelayerWallet = (privateKey: string) => {
-  const providerUrl = 'https://galileo.web3q.io:8545';
-  const ethersWallet = new EOAWallet(privateKey);
-  return ethersWallet.connect(
-    new ethers.providers.JsonRpcProvider(providerUrl),
-  );
-};
-
-export const getNonceForSessionKey = async (
-  sessionKey: string,
-): Promise<number> => {
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  let sessionContract = new ethers.Contract(
-    sessionAddress,
-    sessionAbi,
-    provider,
-  );
-  sessionContract = sessionContract.connect(provider.getSigner());
-  const result = await sessionContract.getSessionInfo(sessionKey);
-  console.log('result', result);
-
-  if (result) {
-    return result.nonce.toNumber();
-  }
-  throw new Error(`Could not get nonce for session key ${sessionKey}`);
-};
-
-export const createTx = async (
-  owner: string,
-  sessionKey: string,
-  toAddress: string,
+export const sendSessionTransaction = async (
+  sessionSigner: SessionSigner,
+  file: string,
 ) => {
-  const nonceFromModule = await getNonceForSessionKey(sessionKey);
-  // TODO upload data
-  // const encodedData = iFaceEthStorage.encodeFunctionData('update', [sessionKey]);
-  const encodedData = iFaceEthStorage.encodeFunctionData('update');
-  const authorizedTx = {
-    to: toAddress,
-    amount: 0,
-    data: encodedData,
-    nonce: nonceFromModule,
-  };
-  return {
-    owner,
-    sessionKeyModuleAddress: sessionAddress,
-    tx: authorizedTx,
-  };
-};
-
-export const signTx = async (args: object) => {
-  return await window.ethereum.request({
-    method: 'wallet_invokeSnap',
-    params: {
-      snapId: defaultSnapOrigin,
-      request: {
-        method: 'interact',
-        params: args,
-      },
-    },
-  });
-};
-
-export const sendTx = async (sessionKey: string, tx: any, signature: any) => {
-  const relayerWallet = getRelayerWallet(
-    process.env.REACT_APP_PKEY ||
-      '8cab001cdaded235e252b8de1997a5b02c35f0acef41fe2427ee953d7570aad4',
+  console.log(sessionSigner);
+  const nftContract = new Contract(
+    ethStorageAddress,
+    ethStorageAbi,
+    sessionSigner,
   );
-  const relayer: LocalRelayer = new LocalRelayer(relayerWallet);
-
-  const ABI = [
-    'function executeTransaction(address _sessionKey, address payable _to, uint256 _value, bytes calldata _data, bytes calldata signature) external returns (bool success)',
-  ];
-  const iface = new ethers.utils.Interface(ABI);
-  const tx3 = {
-    to: sessionAddress,
-    value: 0,
-    data: iface.encodeFunctionData('executeTransaction', [
-      sessionKey,
-      tx.tx.to,
-      tx.tx.amount,
-      tx.tx.data,
-      signature,
-    ]),
-    chainId: 3334,
-  };
-
-  const txHash = await relayer.relayAny(tx3);
-  console.log(txHash);
-  return txHash.hash;
-};
-
-export const sendSessionTransaction = async (key: string, file: string) => {
-  const owner = await getEOAAccount();
-
-  const tx = await createTx(owner, key, ethStorageAddress);
-  const signature = await signTx(tx);
-  console.log('--signInfo-', signature, file);
-  const hash = await sendTx(key, tx, signature);
-  return hash;
+  // TODO
+  const receipt = await nftContract.update();
+  const v = await receipt.wait();
+  console.log(v, file);
+  return true;
 };
