@@ -2,6 +2,7 @@ import { ethers, Wallet as EOAWallet } from 'ethers';
 import { LocalRelayer } from '@biconomy-sdk/relayer';
 import { defaultSnapOrigin } from '../config';
 import { GetSnapsResponse, Snap } from '../types';
+import { getZeroDevSigner, createSessionKey, getRPCProviderOwner, ZeroDevSigner } from '@zerodevapp/sdk';
 
 export const Abi = [
   'event SmartWalletCreated(address)',
@@ -23,9 +24,11 @@ const iFaceEthStorage = new ethers.utils.Interface(
   '[{"inputs": [],"name": "count","outputs": [{"internalType": "uint256", "name": "","type": "uint256"}],"stateMutability": "view","type": "function"},{"inputs": [],"name": "update","outputs": [],"stateMutability": "nonpayable","type": "function"}]',
 );
 
-const factoryAddress = '0x8D01b1142D8FED28D9fE643250662E890D485cb2';
 const sessionAddress = '0x7aEcb0095C9511E4d4EF7ABA0dFcE5b16ad4e818';
 const ethStorageAddress = '0xFE932143c6612CbB4ebCF34Cef5C18696eca5186';
+
+const projectId = '28dda226-fb5f-4b9a-81a0-a95a690f27a2';
+const sessionKeyTime = 24 * 60 * 60;
 
 export type SessionKeyStorage = {
   owner: string;
@@ -101,6 +104,74 @@ export const sendHello = async () => {
 export const isLocalSnap = (snapId: string) => snapId.startsWith('local:');
 
 // smart account info
+const getAccount = async () => {
+  const wallet = getRPCProviderOwner(window.ethereum);
+  return await getZeroDevSigner({
+    projectId,
+    owner: wallet,
+  });
+};
+
+const querySmartAccount = async (owner: string) => {
+  return await window.ethereum.request({
+    method: 'wallet_invokeSnap',
+    params: {
+      snapId: defaultSnapOrigin,
+      request: {
+        method: 'get_aa',
+        params: {
+          owner,
+        },
+      },
+    },
+  });
+};
+
+export const getSmartAccount = async () => {
+  console.log('get user AA Wallet');
+  const owner = await getEOAAccount();
+  const smartAccount = await querySmartAccount(owner);
+  if (smartAccount) {
+    const signer = await getAccount();
+    return {
+      owner,
+      address: smartAccount,
+      signer,
+    };
+  }
+  return undefined;
+};
+
+const saveSmartAccount = async (owner: string, smartAddress: string) => {
+  return await window.ethereum.request({
+    method: 'wallet_invokeSnap',
+    params: {
+      snapId: defaultSnapOrigin,
+      request: {
+        method: 'create_aa',
+        params: {
+          owner,
+          smartAddress,
+        },
+      },
+    },
+  });
+};
+
+export const createSmartAccount = async () => {
+  console.log('create user AA Wallet');
+  const owner = await getEOAAccount();
+  const signer = await getAccount();
+  const address = await signer.getAddress();
+  await saveSmartAccount(owner, address);
+  return {
+    owner,
+    address,
+    signer,
+  };
+};
+
+// session
 export const getSessionInfo = async () => {
   console.log('invoking snap to get session info');
   return await window.ethereum.request({
@@ -110,68 +181,6 @@ export const getSessionInfo = async () => {
       request: { method: 'get_session_info' },
     },
   });
-};
-
-export const getSmartAccount = async () => {
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  let factoryContract = new ethers.Contract(factoryAddress, Abi, provider);
-  factoryContract = factoryContract.connect(provider.getSigner());
-  const smartAccount = await factoryContract.getAAWallet();
-  if (
-    smartAccount &&
-    // eslint-disable-next-line eqeqeq
-    smartAccount != '0x0000000000000000000000000000000000000000'
-  ) {
-    const owner = await getEOAAccount();
-    return {
-      address: smartAccount,
-      owner,
-    };
-  }
-  return undefined;
-};
-
-export const isSessionModuleEnabled = async (address: any) => {
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  let factoryContract = new ethers.Contract(address, Abi, provider);
-  factoryContract = factoryContract.connect(provider.getSigner());
-  return await factoryContract.isModuleEnabled(sessionAddress);
-};
-
-export const createSmartAccount = async () => {
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  let factoryContract = new ethers.Contract(factoryAddress, Abi, provider);
-  factoryContract = factoryContract.connect(provider.getSigner());
-  const tx = await factoryContract.create({
-    value: ethers.utils.parseEther('1'),
-  });
-  const receipt = await tx.wait();
-  console.log(`Transaction: ${tx.hash}`);
-
-  if (receipt.status) {
-    const smartAccount = await factoryContract.getAAWallet();
-    if (
-      smartAccount &&
-      // eslint-disable-next-line eqeqeq
-      smartAccount != '0x0000000000000000000000000000000000000000'
-    ) {
-      const owner = await getEOAAccount();
-      return {
-        address: smartAccount,
-        owner,
-      };
-    }
-  }
-  return undefined;
-};
-
-export const enableSession = async (address: any) => {
-  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
-  let factoryContract = new ethers.Contract(address, Abi, provider);
-  factoryContract = factoryContract.connect(provider.getSigner());
-  const tx = await factoryContract.enableModule(sessionAddress);
-  const receipt = await tx.wait();
-  return receipt.status;
 };
 
 export const createSessionInfo = async (owner: string) => {
@@ -232,11 +241,23 @@ export const pushSession = async (sessionKey: string, smartAddress: string) => {
   return receipt.status;
 };
 
-export const createSessionForSmartAccount = async (smartAddress: string) => {
+export const createSessionForSmartAccount = async (
+  smartAddress: string,
+  signer: ZeroDevSigner,
+) => {
   const owner = await getEOAAccount();
-  const sessionResult = await createSessionInfo(owner);
-  const session = sessionResult as SessionKeyStorage;
-  return await pushSession(session.sessionKey, smartAddress);
+  const sessionKey = await createSessionKey(
+    signer,
+    [
+      {
+        to: ethStorageAddress,
+        selectors: [], // all method
+      },
+    ],
+    sessionKeyTime,
+  );
+  const sessionResult = await createSessionInfo(owner, sessionKey);
+
 };
 
 // *******

@@ -1,4 +1,4 @@
-import {useContext, useEffect, useState} from 'react';
+import { useContext, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { MetamaskActions, MetaMaskContext } from '../hooks';
 import {
@@ -8,16 +8,13 @@ import {
 import {
   getSessionInfo,
   createSmartAccount,
-  enableSession,
   getSmartAccount,
-  isSessionModuleEnabled,
   createSessionForSmartAccount,
   sendSessionTransaction,
 } from '../utils';
 import {
   ConnectButton,
   InstallFlaskButton,
-  EnableModuleButton,
   InteractSessionButton,
   Card,
   CreateButton,
@@ -108,7 +105,7 @@ const SessionBody = styled.div`
   display: flex;
   width: 100%;
   flex-direction: column;
-  padding: 20px 0px 10px 0px;
+  padding: 10px 0px 10px 0px;
 `;
 
 const SessionRow = styled.div`
@@ -144,7 +141,7 @@ const SessionOverviewMessage = styled.div`
   display: flex;
   align-items: center;
   text-align: center;
-  margin-top: 40px;
+  margin-top: 10px;
   padding: 10px;
 `;
 
@@ -163,7 +160,7 @@ const Index = () => {
   const [account, setAccount] = useState(null);
 
   useEffect(() => {
-    async function checkSmart() {
+    async function checkAccount() {
       if (state.installedSnap) {
         const accounts: any = await window.ethereum.request({
           method: 'eth_requestAccounts',
@@ -173,11 +170,11 @@ const Index = () => {
         }
       }
     }
-    checkSmart();
+    checkAccount();
   }, [state.installedSnap]);
 
   async function _getAndSaveSessionInfo() {
-    if (smartAccount.sessionModuleEnabled) {
+    if (smartAccount.signer) {
       const sessionInfo: any = await getSessionInfo();
       console.log('Session info is : ', sessionInfo);
       if (sessionInfo) {
@@ -193,7 +190,7 @@ const Index = () => {
   }
 
   useEffect(() => {
-    async function checkSmart() {
+    async function checkAAWallet() {
       if (state.installedSnap && account) {
         const _smartAccount = await getSmartAccount();
         if (_smartAccount) {
@@ -206,38 +203,12 @@ const Index = () => {
         }
       }
     }
-    checkSmart();
+    checkAAWallet();
   }, [state.installedSnap, account]);
 
   useEffect(() => {
-    async function checkSessionModue() {
-      if (smartAccount.address) {
-        const isSessinoModuleEnabled: boolean = await isSessionModuleEnabled(
-          smartAccount.address,
-        );
-        if (isSessinoModuleEnabled) {
-          saDispatch({
-            type: SmartAccountActions.SetSessionModuleEnabled,
-            payload: true,
-          });
-
-          saDispatch({
-            type: SmartAccountActions.SetModule,
-            payload: {
-              address: '0x2b5Dca28Ad0b7301b78ee1218b1bFC4A7B22E3bC',
-              enabled: true,
-              name: 'Session Module',
-            },
-          });
-        }
-      }
-    }
-    checkSessionModue();
-  }, [smartAccount.address]);
-
-  useEffect(() => {
     _getAndSaveSessionInfo();
-  }, [smartAccount.sessionModuleEnabled]);
+  }, [smartAccount.address]);
 
   // ************
   // event
@@ -259,6 +230,7 @@ const Index = () => {
   const handleCreateSmartAccountClick = async () => {
     try {
       const _smartAccount = await createSmartAccount();
+      console.log(_smartAccount);
       if (_smartAccount) {
         saDispatch({
           type: SmartAccountActions.SetSmartAccount,
@@ -273,25 +245,11 @@ const Index = () => {
     }
   };
 
-  const handleEnableSessionClick = async () => {
-    try {
-      const txHash: any = await enableSession(smartAccount.address);
-      if (txHash) {
-        saDispatch({
-          type: SmartAccountActions.SetSessionModuleEnabled,
-          payload: true,
-        });
-      }
-    } catch (e) {
-      console.error(e);
-      dispatch({ type: MetamaskActions.SetError, payload: e });
-    }
-  };
-
   const handleCreateSessionClick = async () => {
     try {
       const txHash: any = await createSessionForSmartAccount(
         smartAccount.address as string,
+        smartAccount.signer,
       );
       if (txHash) {
         _getAndSaveSessionInfo();
@@ -380,41 +338,13 @@ const Index = () => {
                   fullWidth={false}
                 />
               )}
-
-              {!smartAccount.sessionModuleEnabled && (
-                <Card
-                  content={{
-                    title: 'Enable Session Module',
-                    description: 'Set up temporary session for auto approvals',
-                    button: (
-                      <EnableModuleButton
-                        onClick={handleEnableSessionClick}
-                        disabled={!state.installedSnap}
-                      />
-                    ),
-                  }}
-                  disabled={!smartAccount.address}
-                  fullWidth={false}
-                />
-              )}
-              {smartAccount.sessionModuleEnabled && (
-                <Card
-                  content={{
-                    title: 'Enable Session Module',
-                    description:
-                      '✅ Session Module is already enabled on your smart account',
-                  }}
-                  disabled={!smartAccount.address}
-                  fullWidth={false}
-                />
-              )}
             </div>
-            <SessionsCard disabled={!smartAccount.sessionModuleEnabled}>
+            <SessionsCard disabled={!smartAccount.signer}>
               <SessionHeader>
                 <Title>Sessions</Title>
                 <button
                   onClick={handleCreateSessionClick}
-                  disabled={!smartAccount.sessionModuleEnabled}
+                  disabled={!smartAccount.signer}
                 >
                   + Create Session
                 </button>

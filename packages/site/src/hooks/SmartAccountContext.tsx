@@ -1,4 +1,6 @@
 import { createContext, Dispatch, ReactNode, Reducer, useReducer } from 'react';
+// eslint-disable-next-line import/no-extraneous-dependencies
+import { ZeroDevSigner } from '@zerodevapp/sdk';
 
 export type SmartModule = {
   address: string;
@@ -17,6 +19,7 @@ export type SmartAccountState = {
   modules: SmartModule[];
   sessionModuleEnabled: boolean;
   sessionInfo: SessionKey[];
+  signer: ZeroDevSigner;
 };
 
 const initialState: SmartAccountState = {
@@ -83,6 +86,7 @@ const reducer: Reducer<SmartAccountState, SmartAccountDispatch> = (
         ...state,
         address: _smartAccount.address,
         owner: _smartAccount.owner,
+        signer: _smartAccount.signer,
       };
     }
 

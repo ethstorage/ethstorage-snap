@@ -2,14 +2,82 @@ import { OnRpcRequestHandler } from '@metamask/snaps-types';
 import { panel, text } from '@metamask/snaps-ui';
 import { ethers } from 'ethers';
 
-export type CreateSessionParams = {
+export type CreateAAParams = {
   owner: string;
+  smartAddress: string;
+  sessionInfo?: string;
 };
 
-export type SessionKeyStorage = {
-  owner: string;
-  sessionKey: string;
-  pk: string;
+export type AAWalletStorage = {
+  items: CreateAAParams[];
+};
+
+const getStorageInfo = async () => {
+  return await snap.request({
+    method: 'snap_manageState',
+    params: { operation: 'get' },
+  });
+};
+
+const storeInfo = async (newState: AAWalletStorage) => {
+  await snap.request({
+    method: 'snap_manageState',
+    params: { operation: 'update', newState },
+  });
+};
+
+export const getAAWallet = async (owner: string) => {
+  const store = (await getStorageInfo()) as AAWalletStorage;
+  if (store) {
+    return store.items.find((value) => {
+      return value.owner === owner;
+    });
+  }
+  return undefined;
+};
+
+export const saveAAWallet = async (owner: string, smartAddress: string) => {
+  let items: CreateAAParams[] = [];
+  const store = (await getStorageInfo()) as AAWalletStorage;
+  if (store?.items) {
+    items = store.items;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].owner === owner) {
+        items[i] = { owner, smartAddress };
+        break;
+      }
+    }
+  } else {
+    items.push({ owner, smartAddress });
+  }
+  return await storeInfo({
+    items,
+  });
+};
+
+export const saveSessionKey = async (owner: string, sessionInfo: string) => {
+  const store = (await getStorageInfo()) as AAWalletStorage;
+  let index = -1;
+  if (store) {
+    for (let i = 0; i < store.items.length; i++) {
+      if (store.items[i].owner === owner) {
+        index = i;
+        break;
+      }
+    }
+  }
+
+  if (index !== -1) {
+    store.items[index] = {
+      owner,
+      sessionInfo,
+      smartAddress: store.items[index].smartAddress,
+    };
+    return await storeInfo({
+      items: store.items,
+    });
+  }
+  throw new Error('No Create');
 };
 
 export const SESSION_TX_TYPE = {
@@ -32,6 +100,16 @@ export type SignTxType = {
   owner: string;
   sessionKeyModuleAddress: string;
   tx: SignAuthorizedTx;
+};
+
+export type CreateSessionParams = {
+  owner: string;
+};
+
+export type SessionKeyStorage = {
+  owner: string;
+  sessionKey: string;
+  pk: string;
 };
 
 export const getSessionInfo = async () => {
@@ -109,6 +187,22 @@ export const onRpcRequest: OnRpcRequestHandler = async ({
           ]),
         },
       });
+
+    // aa account
+    case 'get_aa': {
+      const aaParams = request.params as CreateAAParams;
+      const aaInfo: any = await getAAWallet(aaParams.owner);
+      if (aaInfo) {
+        return aaInfo.smartAddress;
+      }
+      return undefined;
+    }
+
+    case 'create_aa': {
+      const aaParams = request.params as CreateAAParams;
+      await saveAAWallet(aaParams.owner, aaParams.smartAddress);
+      return true;
+    }
 
     // query
     case 'get_session_info': {
