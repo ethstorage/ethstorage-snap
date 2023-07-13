@@ -330,7 +330,7 @@ const Index = () => {
               {smartAccount?.address !== undefined && (
                 <Card
                   content={{
-                    title: 'Discover Smart Accounts',
+                    title: '1 Discover Smart Accounts',
                     description: `Smart Account: ${smartAccount.address}`,
                   }}
                   disabled={!state.installedSnap}
@@ -340,7 +340,7 @@ const Index = () => {
             </div>
             <SessionsCard disabled={!smartAccount.address}>
               <SessionHeader>
-                <Title>Sessions</Title>
+                <Title>2 Sessions</Title>
                 <button
                   onClick={handleCreateSessionClick}
                   disabled={!smartAccount.address}
@@ -370,7 +370,7 @@ const Index = () => {
           <ContainerRow>
             <Card
               content={{
-                title: 'Interact with your Wallet via Session Keys',
+                title: '4 Interact with your Wallet via Session Keys',
                 description: '',
                 button: (
                   <InteractSessionButton

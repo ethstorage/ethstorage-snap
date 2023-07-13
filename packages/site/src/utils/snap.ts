@@ -9,11 +9,14 @@ import {
   ZeroDevSigner,
 } from '@zerodevapp/sdk';
 
-const ethStorageAddress = '0xEc5d44B1Dc8CC127805b0DaE8d4BCe4fb48Ee4f7';
-const ethStorageAbi = ['function update() public', 'function update2() public'];
+const ethStorageAddress = '0x03614D3978b5F508655C0a0480E0b4ed397777De';
+const ethStorageAbi = [
+  'function mint(bytes memory fileName_, bytes memory musicName_, bytes memory describe_, bytes memory cover_) public',
+  'function writeChunk(uint256 fileType, uint256 chunkId, bytes memory name, bytes calldata data) public payable virtual',
+];
 
 const projectId = '28dda226-fb5f-4b9a-81a0-a95a690f27a2';
-const sessionKeyTime = Math.floor(Date.now() / 1000) + 24 * 60 * 60;
+const sessionKeyTime = Math.floor(Date.now() / 1000) + 8 * 60 * 60;
 
 export const getEOAAccount = async (): Promise<string> => {
   const accounts: any = await window.ethereum.request({
@@ -204,21 +207,12 @@ export const saveSessionInfo = async (owner: string, sessionInfo: string) => {
 export const createSessionForSmartAccount = async () => {
   const owner = await getEOAAccount();
   const zeroSigner: ZeroDevSigner = await getAccount();
-  const nftContract = new Contract(
-    ethStorageAddress,
-    ethStorageAbi,
-    zeroSigner,
-  );
-  // TODO
   const sessionKey = await createSessionKey(
     zeroSigner,
     [
       {
         to: ethStorageAddress,
-        selectors: [
-          nftContract.interface.getSighash('update'),
-          // nftContract.interface.getSighash('function2'),
-        ], // [] is all method
+        selectors: [], // all method // nftContract.interface.getSighash('function2'),
       },
     ],
     sessionKeyTime,
