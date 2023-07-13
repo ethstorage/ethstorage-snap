@@ -158,6 +158,7 @@ const Index = () => {
   const [smartAccount, saDispatch] = useContext(SmartAccountContext);
 
   const [account, setAccount] = useState(null);
+  const [sessionSinger, setSessionSinger] = useState(null);
 
   useEffect(() => {
     async function checkAccount() {
@@ -183,9 +184,9 @@ const Index = () => {
           payload: {
             owner: sessionInfo.owner,
             key: sessionInfo.sessionKey,
-            sessionSigner: sessionInfo.sessionKeySigner,
           },
         });
+        setSessionSinger(sessionInfo.sessionKeySigner);
       }
     }
   }
@@ -260,10 +261,7 @@ const Index = () => {
 
   const handleSessionInteractonClick = async () => {
     try {
-      await sendSessionTransaction(
-        smartAccount.sessionInfo[0].sessionSigner,
-        '/file',
-      );
+      await sendSessionTransaction(sessionSinger, '/file');
     } catch (e) {
       console.error(e);
       dispatch({ type: MetamaskActions.SetError, payload: e });

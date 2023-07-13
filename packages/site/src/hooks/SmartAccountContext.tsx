@@ -1,5 +1,4 @@
 import { createContext, Dispatch, ReactNode, Reducer, useReducer } from 'react';
-import { SessionSigner } from '@zerodevapp/sdk/dist/src/session/SessionSigner';
 
 export type SmartModule = {
   address: string;
@@ -8,7 +7,6 @@ export type SmartModule = {
 };
 
 export type SessionKey = {
-  sessionSigner: SessionSigner;
   key: string;
   owner: string;
 };

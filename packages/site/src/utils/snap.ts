@@ -1,5 +1,4 @@
 import { Contract } from 'ethers';
-import { SessionSigner } from '@zerodevapp/sdk/dist/src/session/SessionSigner';
 import { defaultSnapOrigin } from '../config';
 import { GetSnapsResponse, Snap } from '../types';
 import {
@@ -14,7 +13,7 @@ const ethStorageAddress = '0xEc5d44B1Dc8CC127805b0DaE8d4BCe4fb48Ee4f7';
 const ethStorageAbi = ['function update() public', 'function update2() public'];
 
 const projectId = '28dda226-fb5f-4b9a-81a0-a95a690f27a2';
-const sessionKeyTime = 24 * 60 * 60;
+const sessionKeyTime = Math.floor(Date.now() / 1000) + 24 * 60 * 60;
 
 export const getEOAAccount = async (): Promise<string> => {
   const accounts: any = await window.ethereum.request({
@@ -174,6 +173,7 @@ export const getSessionInfo = async () => {
       projectId,
       sessionKeyData: sessionInfo as string,
     });
+    console.log('sessionKey', sessionInfo);
     const sessionKey = await sessionKeySigner.getAddress();
     return {
       owner,
@@ -233,14 +233,13 @@ export const createSessionForSmartAccount = async () => {
 // *******
 // *******
 export const sendSessionTransaction = async (
-  sessionSigner: SessionSigner,
+  sessionSinger: any,
   file: string,
 ) => {
-  console.log(sessionSigner);
   const nftContract = new Contract(
     ethStorageAddress,
     ethStorageAbi,
-    sessionSigner,
+    sessionSinger,
   );
   // TODO
   const receipt = await nftContract.update();
