@@ -10,14 +10,14 @@ import {
   createSmartAccount,
   getSmartAccount,
   createSessionForSmartAccount,
-  sendSessionTransaction,
+  getBalance,
 } from '../utils';
 import {
   ConnectButton,
   InstallFlaskButton,
-  InteractSessionButton,
   Card,
   CreateButton,
+  FileUploader,
 } from '../components';
 
 const Container = styled.div`
@@ -159,6 +159,7 @@ const Index = () => {
 
   const [account, setAccount] = useState(null);
   const [sessionSinger, setSessionSinger] = useState(null);
+  const [balance, setBalance] = useState('0');
 
   useEffect(() => {
     async function checkAccount() {
@@ -173,6 +174,18 @@ const Index = () => {
     }
     checkAccount();
   }, [state.installedSnap]);
+
+  useEffect(() => {
+    const timer: NodeJS.Timeout = setInterval(async () => {
+      if (account) {
+        const b = await getBalance(account);
+        setBalance(b);
+      }
+    }, 5000);
+    return () => {
+      clearInterval(timer);
+    };
+  }, [account]);
 
   async function _getAndSaveSessionInfo() {
     if (smartAccount.address) {
@@ -259,15 +272,6 @@ const Index = () => {
     }
   };
 
-  const handleSessionInteractonClick = async () => {
-    try {
-      await sendSessionTransaction(sessionSinger, '/file');
-    } catch (e) {
-      console.error(e);
-      dispatch({ type: MetamaskActions.SetError, payload: e });
-    }
-  };
-
   return (
     <Container>
       <Heading>
@@ -313,9 +317,9 @@ const Index = () => {
               {smartAccount?.address === undefined && (
                 <Card
                   content={{
-                    title: 'Discover Smart Accounts',
+                    title: '1 Discover AA Accounts',
                     description:
-                      'Explore more benefits (social recovery and session keys) with smart accounts',
+                      'Explore more benefits (social recovery and session keys) with AA accounts',
                     button: (
                       <CreateButton
                         onClick={handleCreateSmartAccountClick}
@@ -330,8 +334,8 @@ const Index = () => {
               {smartAccount?.address !== undefined && (
                 <Card
                   content={{
-                    title: '1 Discover Smart Accounts',
-                    description: `Smart Account: ${smartAccount.address}`,
+                    title: '1 Discover AA Accounts',
+                    description: `AA Account: ${smartAccount.address}`,
                   }}
                   disabled={!state.installedSnap}
                   fullWidth={false}
@@ -370,18 +374,20 @@ const Index = () => {
           <ContainerRow>
             <Card
               content={{
-                title: '4 Interact with your Wallet via Session Keys',
-                description: '',
-                button: (
-                  <InteractSessionButton
-                    onClick={handleSessionInteractonClick}
-                    disabled={smartAccount.sessionInfo.length === 0}
-                  />
-                ),
+                title: '3 Transfer Gas Fee',
+                description: `Transfer MATIC to the AA account as gas: ${balance} MATIC`,
               }}
               disabled={smartAccount.sessionInfo.length === 0}
-              fullWidth={true}
+              fullWidth={false}
             />
+            <SessionsCard disabled={smartAccount.sessionInfo.length === 0}>
+              <SessionHeader>
+                <Title>5 Interact with your Wallet via Session Keys</Title>
+              </SessionHeader>
+              <SessionBody>
+                <FileUploader sessionSinger={sessionSinger} />
+              </SessionBody>
+            </SessionsCard>
           </ContainerRow>
         </MainContainer>
       </CardContainer>

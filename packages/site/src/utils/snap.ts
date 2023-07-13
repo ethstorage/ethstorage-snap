@@ -13,6 +13,7 @@ const ethStorageAddress = '0x03614D3978b5F508655C0a0480E0b4ed397777De';
 const ethStorageAbi = [
   'function mint(bytes memory fileName_, bytes memory musicName_, bytes memory describe_, bytes memory cover_) public',
   'function writeChunk(uint256 fileType, uint256 chunkId, bytes memory name, bytes calldata data) public payable virtual',
+  'function getChunkHash(bytes memory name, uint256 chunkId) public view returns (bytes32)',
 ];
 
 const projectId = '28dda226-fb5f-4b9a-81a0-a95a690f27a2';
@@ -228,16 +229,31 @@ export const createSessionForSmartAccount = async () => {
 // *******
 export const sendSessionTransaction = async (
   sessionSinger: any,
-  file: string,
+  fileType: number,
+  chunkId: string,
+  name: string,
+  data: string,
 ) => {
-  const nftContract = new Contract(
+  const contract = new Contract(
     ethStorageAddress,
     ethStorageAbi,
     sessionSinger,
   );
-  // TODO
-  const receipt = await nftContract.update();
+  const receipt = await contract.writeChunk(fileType, chunkId, name, data);
   const v = await receipt.wait();
-  console.log(v, file);
+  console.log(v);
   return true;
+};
+
+export const getHashKey = async (
+  sessionSinger: any,
+  hexName: string,
+  index: string,
+) => {
+  const contract = new Contract(
+    ethStorageAddress,
+    ethStorageAbi,
+    sessionSinger,
+  );
+  return await contract.getChunkHash(hexName, index);
 };

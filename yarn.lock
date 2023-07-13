@@ -23715,6 +23715,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"react-icons@npm:^4.10.1":
+  version: 4.10.1
+  resolution: "react-icons@npm:4.10.1"
+  peerDependencies:
+    react: "*"
+  checksum: b6c8d4fe482b112e1041515d93ef7670a0af128855c926052a076b64d0b991cdd4391394b26467100f8da3859db1ebd8f9c6b7614fa5969fde83de45c71031a3
+  languageName: node
+  linkType: hard
+
 "react-is@npm:^16.13.1, react-is@npm:^16.7.0":
   version: 16.13.1
   resolution: "react-is@npm:16.13.1"
@@ -25419,6 +25428,7 @@ __metadata:
     gatsby-plugin-styled-components: ^5.24.0
     gatsby-plugin-svgr: ^3.0.0-beta.0
     https-browserify: ^1.0.0
+    js-sha3: ^0.8.0
     os-browserify: ^0.3.0
     prettier: ^2.2.1
     prettier-plugin-packagejson: ^2.2.18
@@ -25426,6 +25436,7 @@ __metadata:
     querystring-es3: ^0.2.1
     react: ^18.2.0
     react-dom: ^18.2.0
+    react-icons: ^4.10.1
     react-is: ^18.2.0
     rimraf: ^3.0.2
     stream-browserify: ^3.0.0

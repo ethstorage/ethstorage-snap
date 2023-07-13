@@ -1,3 +1,6 @@
+import { ethers } from "ethers";
+import {formatEther} from "@ethersproject/units/src.ts";
+
 /**
  * Detect if the wallet injecting the ethereum object is Flask.
  *
@@ -17,4 +20,10 @@ export const isFlask = async () => {
   } catch {
     return false;
   }
+};
+
+export const getBalance = async (account: string) => {
+  const provider = new ethers.providers.Web3Provider(window.ethereum as any);
+  const balance = await provider.getBalance(account);
+  return ethers.utils.formatEther(balance);
 };
