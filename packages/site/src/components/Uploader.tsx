@@ -41,21 +41,10 @@ export const FileUploader = ({ sessionSinger }) => {
     {},
   );
   const [fileStatus, setFileStatus] = useState<{ [key: string]: string }>({});
-  const [uploadSuccess, setUploadSuccess] = useState<boolean>(false);
   const [isUpload, setUpload] = useState<boolean>(false);
 
   // Create a ref for the file input
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const resetUploader = () => {
-    setFileProgress({});
-    setFileStatus({});
-    setUploadSuccess(false);
-    setUpload(false);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = '';
-    }
-  };
 
   const fileUploadHandler = async (file: File) => {
     const { name, size } = file;
@@ -140,7 +129,6 @@ export const FileUploader = ({ sessionSinger }) => {
       files.forEach((file) => {
         setFileProgress((prev) => ({ ...prev, [file.name]: 0 }));
         fileUploadHandler(file).then(() => {
-          setUploadSuccess(true);
           setUpload(false);
         });
       });
@@ -149,41 +137,37 @@ export const FileUploader = ({ sessionSinger }) => {
 
   return (
     <div>
-      {uploadSuccess ? (
-        <button className="btn w-1/2" onClick={resetUploader}>
-          Upload Another
-        </button>
+      <div className="form-control w-full">
+        <div>Max File Size: 5MB; Accepted All Audio File Types</div>
+        <input
+          type="file"
+          style={{ marginTop: '20px' }}
+          onChange={fileSelectedHandler}
+          accept="audio/*"
+          disabled={isUpload}
+          ref={fileInputRef}
+          multiple={allowMultiple} // Added the 'multiple' attribute conditionally
+        />
+      </div>
+
+      {fileStatus ? (
+        <div>
+          {Object.entries(fileStatus).map(([, error]) => (
+            <div style={{ marginTop: '20px', color: 'red' }}>
+              Error: {error}
+            </div>
+          ))}
+        </div>
       ) : (
-        <div className="form-control w-full">
-          <div>Max File Size: 5MB</div>
-          <div style={{ marginTop: '5px' }}>Accepted All Music File Types</div>
-          <input
-            type="file"
-            style={{ marginTop: '20px' }}
-            onChange={fileSelectedHandler}
-            accept="audio/*"
-            disabled={isUpload}
-            ref={fileInputRef}
-            multiple={allowMultiple} // Added the 'multiple' attribute conditionally
-          />
+        <div>
+          {Object.entries(fileProgress).map(([fileName, progress]) => (
+            <div key={fileName} style={{ marginTop: '20px' }}>
+              <progress style={{ width: '85%' }} value={progress} max="100" />
+              {progress === 100 ? <span style={{marginLeft: '5px'}}>Success!</span> : (<></>)}
+            </div>
+          ))}
         </div>
       )}
-
-      <div>
-        {Object.entries(fileProgress).map(([fileName, progress]) => (
-          <div key={fileName}>
-            <p>{fileName}</p>
-            <div>
-              <progress style={{ width: '85%' }} value={progress} max="100" />
-              {progress === 100 ? (
-                <span style={{ marginLeft: '5px' }}>Success!</span>
-              ) : (
-                <></>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
     </div>
   );
 };
