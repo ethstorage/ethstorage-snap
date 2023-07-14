@@ -102,6 +102,7 @@ export const FileUploader = ({ sessionSinger, setUploadFileInfo }) => {
         const progress = Math.ceil(((Number(index) + 1) / chunks.length) * 100);
         setFileProgress((prev) => ({ ...prev, [name]: progress }));
       } catch (e) {
+        console.log(e);
         uploadState = false;
         break;
       }
@@ -166,8 +167,8 @@ export const FileUploader = ({ sessionSinger, setUploadFileInfo }) => {
 
       {isError ? (
         <div>
-          {Object.entries(fileStatus).map(([, error]) => (
-            <div style={{ marginTop: '20px', color: 'red' }}>
+          {Object.entries(fileStatus).map(([fileName, error]) => (
+            <div key={fileName} style={{ marginTop: '20px', color: 'red' }}>
               Error: {error}
             </div>
           ))}

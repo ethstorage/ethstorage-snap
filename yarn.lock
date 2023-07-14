@@ -4851,8 +4851,8 @@ __metadata:
   linkType: hard
 
 "@metamask/controller-utils@npm:^4.0.1":
-  version: 4.1.0
-  resolution: "@metamask/controller-utils@npm:4.1.0"
+  version: 4.2.0
+  resolution: "@metamask/controller-utils@npm:4.2.0"
   dependencies:
     "@metamask/utils": ^5.0.2
     "@spruceid/siwe-parser": 1.1.3
@@ -4863,7 +4863,7 @@ __metadata:
     ethereumjs-util: ^7.0.10
     ethjs-unit: ^0.1.6
     fast-deep-equal: ^3.1.3
-  checksum: b4975e6ca860b691931254aa749e8c4faddd04279609cf197155b38150e55da0e966bf9b2d61ee1cd070f79d16e0305d5a0ff1747e0b4ab2e1c3ab46ca84e4d7
+  checksum: e71779577c37038e6e605a43ef6b9c1af82e0b3887a72c01f48ae1e4e2005116fc9d09c8b690139478c04dd2929e227642c5fd80cfbc81814d667c415c714228
   languageName: node
   linkType: hard
 
@@ -4917,19 +4917,19 @@ __metadata:
   linkType: hard
 
 "@metamask/eth-json-rpc-middleware@npm:^11.0.0":
-  version: 11.0.0
-  resolution: "@metamask/eth-json-rpc-middleware@npm:11.0.0"
+  version: 11.0.1
+  resolution: "@metamask/eth-json-rpc-middleware@npm:11.0.1"
   dependencies:
     "@metamask/eth-json-rpc-provider": ^1.0.0
     "@metamask/eth-sig-util": ^5.0.0
-    "@metamask/utils": ^3.0.3
+    "@metamask/utils": ^5.0.1
     clone: ^2.1.1
-    eth-block-tracker: ^7.0.0
+    eth-block-tracker: ^7.0.1
     eth-rpc-errors: ^4.0.3
     json-rpc-engine: ^6.1.0
     pify: ^3.0.0
     safe-stable-stringify: ^2.3.2
-  checksum: c866d07a199ab480ceeb7ab8df61c08284640b5ac13aee3dd81dae9e0e5575f4a425d95728070ab5402c0c6cd5f9237fb5f4f22dbcdc99fe0b50bb47df561830
+  checksum: 157672f3e0dde42ba85676b51593d36d956a1e66f9b98777735ab2903c6e077fd5f7c2acf4ecc9661074b2780a88309065007a86b5cb25cfcf2ce3fdc71a5a8f
   languageName: node
   linkType: hard
 
@@ -5487,18 +5487,6 @@ __metadata:
   version: 1.1.0
   resolution: "@metamask/types@npm:1.1.0"
   checksum: 500e8c076a2b0a6d688c8c465101256f090547d99c9a5585efe3d1db7a494b6b2712b127043fb316912caffc4fff78976b9a7780780abb68305e8a3bf812689c
-  languageName: node
-  linkType: hard
-
-"@metamask/utils@npm:^3.0.3":
-  version: 3.6.0
-  resolution: "@metamask/utils@npm:3.6.0"
-  dependencies:
-    "@types/debug": ^4.1.7
-    debug: ^4.3.4
-    semver: ^7.3.8
-    superstruct: ^1.0.3
-  checksum: 1ebc6677bb017e4d09d4af143621fe27194d8ed815234cfd76469c3c734dc1db2ea7b577c01a2096c21c04d8c9c4d721d3035b5353fe2ded3b4737f326755e43
   languageName: node
   linkType: hard
 
@@ -8119,13 +8107,13 @@ __metadata:
   linkType: hard
 
 "@types/react@npm:*, @types/react@npm:^18.0.15":
-  version: 18.2.14
-  resolution: "@types/react@npm:18.2.14"
+  version: 18.2.15
+  resolution: "@types/react@npm:18.2.15"
   dependencies:
     "@types/prop-types": "*"
     "@types/scheduler": "*"
     csstype: ^3.0.2
-  checksum: a6a5e8cc78f486b9020d1ad009aa6c56943c68c7c6376e0f8399e9cbcd950b7b8f5d73f00200f5379f5e58d31d57d8aed24357f301d8e86108cd438ce6c8b3dd
+  checksum: 36989f638201bfe2f4110b06c119180f6df9c0e13d7060481e82e7a745f81745a01ae543c478a25b61e0767cb52e82da2ad5b0dedacabf99339e523d06176705
   languageName: node
   linkType: hard
 
@@ -13269,9 +13257,9 @@ __metadata:
   linkType: hard
 
 "electron-to-chromium@npm:^1.4.431":
-  version: 1.4.458
-  resolution: "electron-to-chromium@npm:1.4.458"
-  checksum: 31b2c9c6bf3ba98d51f41dd864f2d6e5382c8029c09849cb1bc0ec71089d89aa9008b26bd9f967788e94902d9be242a183bbbd5b6878f86ff7c15d75b739b79b
+  version: 1.4.460
+  resolution: "electron-to-chromium@npm:1.4.460"
+  checksum: 332686067de5ea3d032884bd1343fd0f944c67007717da41095cbb68cfbf3668e4c9a8929940313e1ddb771ab99afaffdabd4daa99785ddea5ef5d91d63e31b9
   languageName: node
   linkType: hard
 
@@ -14238,7 +14226,7 @@ __metadata:
   languageName: node
   linkType: hard
 
-"eth-block-tracker@npm:^7.0.0":
+"eth-block-tracker@npm:^7.0.1":
   version: 7.1.0
   resolution: "eth-block-tracker@npm:7.1.0"
   dependencies:
@@ -15521,8 +15509,8 @@ __metadata:
   linkType: hard
 
 "framer-motion@npm:^10.12.8":
-  version: 10.12.18
-  resolution: "framer-motion@npm:10.12.18"
+  version: 10.12.20
+  resolution: "framer-motion@npm:10.12.20"
   dependencies:
     "@emotion/is-prop-valid": ^0.8.2
     tslib: ^2.4.0
@@ -15537,7 +15525,7 @@ __metadata:
       optional: true
     react-dom:
       optional: true
-  checksum: 71539be1175de80d2266702069bb3c4f0150eb3e28f0e32307e10c217410d5ee350b025d48a86c3144caf2d0e0e1dd95e33ed886a14466bc1e763e52d4cd6157
+  checksum: 2be1dee2235d4ee40780aa4ff1188121b268b8d8313facc11aabf25d0e44047c2d835e25a78d80346935c7fdeb85a34665883c5ecc3d1b5396702d8bcfc5c7bc
   languageName: node
   linkType: hard
 
@@ -22952,13 +22940,13 @@ __metadata:
   linkType: hard
 
 "postcss@npm:^8.2.15, postcss@npm:^8.2.9, postcss@npm:^8.3.11":
-  version: 8.4.25
-  resolution: "postcss@npm:8.4.25"
+  version: 8.4.26
+  resolution: "postcss@npm:8.4.26"
   dependencies:
     nanoid: ^3.3.6
     picocolors: ^1.0.0
     source-map-js: ^1.0.2
-  checksum: 9ed3ab8af43ad5210c28f56f916fd9b8c9f94fbeaebbf645dcf579bc28bdd8056c2a7ecc934668d399b81fedb6128f0c4b299f931e50454964bc911c25a3a0a2
+  checksum: 1cf08ee10d58cbe98f94bf12ac49a5e5ed1588507d333d2642aacc24369ca987274e1f60ff4cbf0081f70d2ab18a5cd3a4a273f188d835b8e7f3ba381b184e57
   languageName: node
   linkType: hard
 
@@ -23712,15 +23700,6 @@ __metadata:
   peerDependencies:
     react: ^16.8.0 || ^17 || ^18
   checksum: 3abe1dcf449a3d438b4e5403d93d1502f6dab05afd5c5215f0fc88a32f3d06e7f4b77bee75479359c22a418af6ea0f52711478c73773cb5fd0f43da50669aa17
-  languageName: node
-  linkType: hard
-
-"react-icons@npm:^4.10.1":
-  version: 4.10.1
-  resolution: "react-icons@npm:4.10.1"
-  peerDependencies:
-    react: "*"
-  checksum: b6c8d4fe482b112e1041515d93ef7670a0af128855c926052a076b64d0b991cdd4391394b26467100f8da3859db1ebd8f9c6b7614fa5969fde83de45c71031a3
   languageName: node
   linkType: hard
 
@@ -25436,7 +25415,6 @@ __metadata:
     querystring-es3: ^0.2.1
     react: ^18.2.0
     react-dom: ^18.2.0
-    react-icons: ^4.10.1
     react-is: ^18.2.0
     rimraf: ^3.0.2
     stream-browserify: ^3.0.0
@@ -28496,9 +28474,9 @@ __metadata:
   languageName: node
   linkType: hard
 
-"webdriver@npm:8.12.1":
-  version: 8.12.1
-  resolution: "webdriver@npm:8.12.1"
+"webdriver@npm:8.12.3":
+  version: 8.12.3
+  resolution: "webdriver@npm:8.12.3"
   dependencies:
     "@types/node": ^20.1.0
     "@types/ws": ^8.5.3
@@ -28511,13 +28489,13 @@ __metadata:
     got: ^ 12.6.1
     ky: ^0.33.0
     ws: ^8.8.0
-  checksum: b40db3315134fc563a74bf1ad47351b86970ec52d09f94c036bec3188d91471b0fd42a395cd479a936dcde40022b8963cc753d4a186cd326bfd7852ab8e3e799
+  checksum: 12779dbbfd0abe356924f7a3bb7c5fe7978abfff706b92b92215bdb1e0ecdf01a5368508339f37a285f570eacf6c7dff896898ef0105cc273303f7f69222e0f6
   languageName: node
   linkType: hard
 
 "webdriverio@npm:^8.5.2":
-  version: 8.12.1
-  resolution: "webdriverio@npm:8.12.1"
+  version: 8.12.3
+  resolution: "webdriverio@npm:8.12.3"
   dependencies:
     "@types/node": ^20.1.0
     "@wdio/config": 8.12.1
@@ -28543,8 +28521,8 @@ __metadata:
     resq: ^1.9.1
     rgb2hex: 0.2.5
     serialize-error: ^8.0.0
-    webdriver: 8.12.1
-  checksum: f0345b607d12c73f285bf3d2b0db6f65d83241cd9b0f8f37f3e50abf5a3b00d47b5393a5c741f90e72fadc98637286599025ff408a80583b0d8773f54fbb9884
+    webdriver: 8.12.3
+  checksum: a8115c0871bb6b244a1d55589fb052cc79b8c83f1cda564f72fec0366fd8b7fb5819c765755a2c0ae16783427cfc300c1a685f3beb5bf4d3a662dede78dbe34b
   languageName: node
   linkType: hard
 

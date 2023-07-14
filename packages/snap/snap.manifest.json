@@ -1,5 +1,5 @@
 {
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "An example Snap written in TypeScript.",
   "proposedName": "EthStorage Snap",
   "repository": {
@@ -7,7 +7,7 @@
     "url": "https://github.com/MetaMask/template-snap-monorepo.git"
   },
   "source": {
-    "shasum": "bV1+TmdAQip0jxPENzLomrh25thk6hyGoxv6qSxfO7s=",
+    "shasum": "GvhNTW5vm9we5nBvIUgB+snW6zCkl7eNgQFGEHESQL8=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",

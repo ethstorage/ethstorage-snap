@@ -180,7 +180,6 @@ export const getSessionInfo = async () => {
       projectId,
       sessionKeyData: sessionInfo as string,
     });
-    console.log('sessionKey', sessionInfo);
     const sessionKey = await sessionKeySigner.getAddress();
     return {
       owner,
