@@ -1,3 +1,4 @@
+// eslint-disable-next-line import/no-extraneous-dependencies
 const webpack = require('webpack');
 
 exports.onCreateWebpackConfig = ({ actions }) => {
@@ -6,6 +7,17 @@ exports.onCreateWebpackConfig = ({ actions }) => {
       new webpack.ProvidePlugin({
         process: 'process/browser',
         Buffer: ['buffer', 'Buffer'],
+      }),
+      new webpack.NormalModuleReplacementPlugin(/node:/u, (resource) => {
+        const mod = resource.request.replace(/^node:/u, '');
+        switch (mod) {
+          case 'crypto':
+            resource.request = 'crypto-browserify';
+            break;
+          default:
+            // throw new Error(`Not found ${mod}`);
+            break;
+        }
       }),
     ],
     resolve: {
@@ -17,7 +29,7 @@ exports.onCreateWebpackConfig = ({ actions }) => {
         os: require.resolve('os-browserify/browser'),
         stream: require.resolve('stream-browserify'),
         url: require.resolve('url'),
-        zlib: require.resolve('browserify-zlib')
+        zlib: require.resolve('browserify-zlib'),
       },
     },
   });
