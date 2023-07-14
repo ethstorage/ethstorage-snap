@@ -7,12 +7,12 @@
     "url": "https://github.com/MetaMask/template-snap-monorepo.git"
   },
   "source": {
-    "shasum": "GvhNTW5vm9we5nBvIUgB+snW6zCkl7eNgQFGEHESQL8=",
+    "shasum": "Fv4Fl41+nwrDDA1bWr+CzFTnKSby7eTqLxRIvc+klBg=",
     "location": {
       "npm": {
         "filePath": "dist/bundle.js",
         "iconPath": "images/icon.svg",
-        "packageName": "@metamask/ethstorage-snap",
+        "packageName": "@iteyelmp/ethstorage-snap",
         "registry": "https://registry.npmjs.org/"
       }
     }
