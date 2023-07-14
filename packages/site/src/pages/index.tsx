@@ -11,6 +11,7 @@ import {
   getSmartAccount,
   createSessionForSmartAccount,
   getBalance,
+  mintNft,
 } from '../utils';
 import {
   ConnectButton,
@@ -18,6 +19,7 @@ import {
   Card,
   CreateButton,
   FileUploader,
+  MintButton,
 } from '../components';
 
 const Container = styled.div`
@@ -160,6 +162,8 @@ const Index = () => {
   const [account, setAccount] = useState(null);
   const [sessionSinger, setSessionSinger] = useState(null);
   const [balance, setBalance] = useState('0');
+  const [uploadFileInfo, setUploadFileInfo] = useState(null);
+  const [musicNftUrl, setMusicNftUrl] = useState('');
 
   useEffect(() => {
     async function checkAccount() {
@@ -269,6 +273,21 @@ const Index = () => {
     } catch (e) {
       console.error(e);
       dispatch({ type: MetamaskActions.SetError, payload: e });
+    }
+  };
+
+  const handleMintClick = async () => {
+    try {
+      const url: string | undefined = await mintNft(
+        sessionSinger,
+        uploadFileInfo,
+      );
+      if (url) {
+        setMusicNftUrl(url);
+      }
+    } catch (e) {
+      console.error(e);
+      setMusicNftUrl(e.message);
     }
   };
 
@@ -382,12 +401,31 @@ const Index = () => {
             />
             <SessionsCard disabled={smartAccount.sessionInfo.length === 0}>
               <SessionHeader>
-                <Title>5 Interact with your Wallet via Session Keys</Title>
+                <Title>4 Interact with your Wallet via Session Keys</Title>
               </SessionHeader>
               <SessionBody>
-                <FileUploader sessionSinger={sessionSinger} />
+                <FileUploader
+                  sessionSinger={sessionSinger}
+                  setUploadFileInfo={setUploadFileInfo}
+                />
               </SessionBody>
             </SessionsCard>
+          </ContainerRow>
+          <ContainerRow>
+            <Card
+              content={{
+                title: '5 Mint Music NFT',
+                description: `${musicNftUrl}`,
+                button: (
+                  <MintButton
+                    onClick={handleMintClick}
+                    disabled={uploadFileInfo === null}
+                  />
+                ),
+              }}
+              disabled={uploadFileInfo === null}
+              fullWidth={true}
+            />
           </ContainerRow>
         </MainContainer>
       </CardContainer>

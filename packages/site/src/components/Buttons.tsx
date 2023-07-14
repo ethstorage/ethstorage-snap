@@ -136,3 +136,7 @@ export const EnableModuleButton = (props: ComponentProps<typeof Button>) => {
 export const InteractSessionButton = (props: ComponentProps<typeof Button>) => {
   return <Button {...props}>Send Session Transaction</Button>;
 };
+
+export const MintButton = (props: ComponentProps<typeof Button>) => {
+  return <Button {...props}>Mint</Button>;
+};

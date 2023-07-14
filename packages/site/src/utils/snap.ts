@@ -1,4 +1,4 @@
-import { Contract } from 'ethers';
+import {Contract, ethers} from 'ethers';
 import { defaultSnapOrigin } from '../config';
 import { GetSnapsResponse, Snap } from '../types';
 import {
@@ -10,10 +10,13 @@ import {
 } from '@zerodevapp/sdk';
 
 const ethStorageAddress = '0x03614D3978b5F508655C0a0480E0b4ed397777De';
+const NFTAddress = '0xDC2700652Dd7E7fe05D47399e4b2a4B5D3da4db0';
+const NFT_TOPICS = '0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef';
 const ethStorageAbi = [
   'function mint(bytes memory fileName_, bytes memory musicName_, bytes memory describe_, bytes memory cover_) public',
   'function writeChunk(uint256 fileType, uint256 chunkId, bytes memory name, bytes calldata data) public payable virtual',
   'function getChunkHash(bytes memory name, uint256 chunkId) public view returns (bytes32)',
+  'event Transfer(address indexed from, address indexed to, uint256 indexed tokenId)',
 ];
 
 const projectId = '28dda226-fb5f-4b9a-81a0-a95a690f27a2';
@@ -256,4 +259,32 @@ export const getHashKey = async (
     sessionSinger,
   );
   return await contract.getChunkHash(hexName, index);
+};
+
+const stringToHex = (s: string) =>
+  ethers.utils.hexlify(ethers.utils.toUtf8Bytes(s));
+
+export const mintNft = async (sessionSinger: any, name: string | null) => {
+  const contract = new Contract(
+    ethStorageAddress,
+    ethStorageAbi,
+    sessionSinger,
+  );
+  const fileName = stringToHex(name as string);
+  const musicName = stringToHex('Test Music Nft');
+  const describe = stringToHex('Test Music Nft');
+  const cover = stringToHex('');
+  const tx = await contract.mint(fileName, musicName, describe, cover);
+  const receipt = await tx.wait();
+  console.log(receipt);
+  if (receipt?.logs) {
+    const iface = new ethers.utils.Interface(ethStorageAbi);
+    const logResult = receipt.logs.find((log: { topics: string[] }) => {
+      return log.topics[0] === NFT_TOPICS;
+    });
+    const info = iface.parseLog(logResult);
+    const id = info.args[2];
+    return `https://${NFTAddress}.80001.w3link.io/play/${id}`;
+  }
+  return undefined;
 };

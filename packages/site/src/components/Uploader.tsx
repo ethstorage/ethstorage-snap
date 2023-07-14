@@ -30,7 +30,7 @@ const bufferChunk = (buffer: Buffer, chunkSize: number) => {
   return result;
 };
 
-export const FileUploader = ({ sessionSinger }) => {
+export const FileUploader = ({ sessionSinger, setUploadFileInfo }) => {
   const allowMultiple = false;
   const maxFileSize = 5;
 
@@ -45,6 +45,17 @@ export const FileUploader = ({ sessionSinger }) => {
 
   // Create a ref for the file input
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const isError = Object.values(fileStatus).some(
+    (status) => status !== 'Uploaded',
+  );
+
+  const resetUploader = () => {
+    setFileProgress({});
+    setFileStatus({});
+    setUpload(false);
+    setUploadFileInfo(null);
+  };
 
   const fileUploadHandler = async (file: File) => {
     const { name, size } = file;
@@ -99,6 +110,7 @@ export const FileUploader = ({ sessionSinger }) => {
     if (uploadState) {
       const progress = 100;
       setFileProgress((prev) => ({ ...prev, [name]: progress }));
+      setUploadFileInfo(name);
     } else {
       const fileErrors: { [key: string]: string } = {};
       fileErrors[file.name] = `File Upload Error`;
@@ -107,6 +119,8 @@ export const FileUploader = ({ sessionSinger }) => {
   };
 
   const fileSelectedHandler = (event: ChangeEvent<HTMLInputElement>) => {
+    resetUploader();
+
     setUpload(true);
     if (event.target.files) {
       const files = Array.from(event.target.files);
@@ -150,7 +164,7 @@ export const FileUploader = ({ sessionSinger }) => {
         />
       </div>
 
-      {fileStatus ? (
+      {isError ? (
         <div>
           {Object.entries(fileStatus).map(([, error]) => (
             <div style={{ marginTop: '20px', color: 'red' }}>
