@@ -21,6 +21,8 @@ import {
   FileUploader,
   MintButton,
 } from '../components';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Container = styled.div`
   display: flex;
@@ -257,9 +259,11 @@ const Index = () => {
             _smartAccount,
           },
         });
+        toast('Creat AA Account Success!');
       }
     } catch (e) {
       console.error(e);
+      toast('Creat AA Account Fail!');
       dispatch({ type: MetamaskActions.SetError, payload: e });
     }
   };
@@ -269,9 +273,11 @@ const Index = () => {
       const status: any = await createSessionForSmartAccount();
       if (status) {
         _getAndSaveSessionInfo();
+        toast('Create Session Key Success!');
       }
     } catch (e) {
       console.error(e);
+      toast('Create Session Key Fail!');
       dispatch({ type: MetamaskActions.SetError, payload: e });
     }
   };
@@ -284,9 +290,11 @@ const Index = () => {
       );
       if (url) {
         setMusicNftUrl(url);
+        toast('Mint Success!');
       }
     } catch (e) {
       console.error(e);
+      toast('Mint Fail!');
       setMusicNftUrl(e.message);
     }
   };
@@ -429,6 +437,7 @@ const Index = () => {
           </ContainerRow>
         </MainContainer>
       </CardContainer>
+      <ToastContainer />
     </Container>
   );
 };
