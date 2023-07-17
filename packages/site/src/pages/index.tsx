@@ -183,15 +183,15 @@ const Index = () => {
 
   useEffect(() => {
     const timer: NodeJS.Timeout = setInterval(async () => {
-      if (account) {
-        const b = await getBalance(account);
+      if (smartAccount.address) {
+        const b = await getBalance(smartAccount.address);
         setBalance(b);
       }
     }, 5000);
     return () => {
       clearInterval(timer);
     };
-  }, [account]);
+  }, [smartAccount.address]);
 
   async function _getAndSaveSessionInfo() {
     if (smartAccount.address) {
